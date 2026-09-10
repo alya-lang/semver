@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [main, master, develop]
+    branches: [main]
   pull_request:
-    branches: [main, master, develop]
+    branches: [main]
 
 jobs:
   test:
@@ -27,13 +27,13 @@ jobs:
         id: cache-alyac
         with:
           path: ~/.cargo/bin/alyac*
-          key: ${{ runner.os }}-alyac-compiler
+          key: ${{ runner.os }}-alyac-compiler-main
 
       - name: Install Alya Compiler (alyac)
         if: steps.cache-alyac.outputs.cache-hit != 'true'
         shell: bash
         run: |
-          cargo install --git https://github.com/alya-lang/alya --bin alyac
+          cargo install --git https://github.com/alya-lang/alya --branch main --bin alyac
 
       - name: Verify alyac installation
         run: |
