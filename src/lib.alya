@@ -1,6 +1,600 @@
-# semver library
+# ═══════════════════════════════════════════════════════════════
+# Alya SemVer Library (SemVer 2.0.0)
 # Part of the Alya Language package ecosystem (https://github.com/alya-lang)
+# ═══════════════════════════════════════════════════════════════
 
-function hello(name = "World")
-    return "Hello, " + name + "!"
+struct Version
+    major
+    minor
+    patch
+    prerelease
+    build
+    raw
 end
+
+# ─────────────────────────────────────────────────────────────
+# Internal String & Character Helpers
+# ─────────────────────────────────────────────────────────────
+
+function _sv_trim(s)
+    let slen = len(s)
+    if slen == 0
+        return ""
+    end
+    let start_idx = 0
+    while start_idx < slen
+        let ch = char_at(s, start_idx)
+        if ch != " " and ch != "\t" and ch != "\r" and ch != "\n"
+            break
+        end
+        start_idx += 1
+    end
+    if start_idx >= slen
+        return ""
+    end
+    let end_idx = slen - 1
+    while end_idx >= start_idx
+        let ch = char_at(s, end_idx)
+        if ch != " " and ch != "\t" and ch != "\r" and ch != "\n"
+            break
+        end
+        end_idx -= 1
+    end
+    return substring(s, start_idx, end_idx - start_idx + 1)
+end
+
+function _sv_is_digit(ch)
+    if len(ch) != 1
+        return 0
+    end
+    let c = ord(ch)
+    return c >= 48 and c <= 57
+end
+
+function _sv_is_all_digits(s)
+    let slen = len(s)
+    if slen == 0
+        return 0
+    end
+    let i = 0
+    while i < slen
+        if _sv_is_digit(char_at(s, i)) == 0
+            return 0
+        end
+        i += 1
+    end
+    return 1
+end
+
+function _sv_split_char(s, delim)
+    let res = []
+    let slen = len(s)
+    let cur = ""
+    let i = 0
+    while i < slen
+        let ch = char_at(s, i)
+        if ch == delim
+            res.push(cur)
+            cur = ""
+        else
+            cur += ch
+        end
+        i += 1
+    end
+    res.push(cur)
+    return res
+end
+
+function _sv_index_of(s, needle)
+    let slen = len(s)
+    let nlen = len(needle)
+    if nlen == 0
+        return 0
+    end
+    if nlen > slen
+        return -1
+    end
+    let i = 0
+    while i <= slen - nlen
+        if substring(s, i, nlen) == needle
+            return i
+        end
+        i += 1
+    end
+    return -1
+end
+
+function _sv_starts_with(s, prefix)
+    let plen = len(prefix)
+    let slen = len(s)
+    if plen > slen
+        return 0
+    end
+    return substring(s, 0, plen) == prefix
+end
+
+# ─────────────────────────────────────────────────────────────
+# Parsing & Formatting
+# ─────────────────────────────────────────────────────────────
+
+function clean(v_str)
+    let s = _sv_trim(v_str)
+    if _sv_starts_with(s, "=")
+        s = _sv_trim(substring(s, 1, len(s) - 1))
+    end
+    if _sv_starts_with(s, "v") or _sv_starts_with(s, "V")
+        s = _sv_trim(substring(s, 1, len(s) - 1))
+    end
+    return s
+end
+
+function parse(v_str)
+    let s = clean(v_str)
+    if len(s) == 0
+        return Version(0, 0, 0, "", "", "")
+    end
+
+    let build_meta = ""
+    let plus_idx = _sv_index_of(s, "+")
+    if plus_idx >= 0
+        build_meta = substring(s, plus_idx + 1, len(s) - (plus_idx + 1))
+        s = substring(s, 0, plus_idx)
+    end
+
+    let prerelease = ""
+    let dash_idx = _sv_index_of(s, "-")
+    if dash_idx >= 0
+        prerelease = substring(s, dash_idx + 1, len(s) - (dash_idx + 1))
+        s = substring(s, 0, dash_idx)
+    end
+
+    let parts = _sv_split_char(s, ".")
+    let maj = 0
+    let min = 0
+    let pat = 0
+
+    if arr_len(parts) >= 1
+        if _sv_is_all_digits(parts[0]) == 1
+            maj = to_int(parts[0])
+        end
+    end
+    if arr_len(parts) >= 2
+        if _sv_is_all_digits(parts[1]) == 1
+            min = to_int(parts[1])
+        end
+    end
+    if arr_len(parts) >= 3
+        if _sv_is_all_digits(parts[2]) == 1
+            pat = to_int(parts[2])
+        end
+    end
+
+    let raw_val = str(maj) + "." + str(min) + "." + str(pat)
+    if len(prerelease) > 0
+        raw_val += "-" + prerelease
+    end
+    if len(build_meta) > 0
+        raw_val += "+" + build_meta
+    end
+
+    return Version(maj, min, pat, prerelease, build_meta, raw_val)
+end
+
+function create(major, minor, patch, prerelease = "", build = "")
+    let raw_val = str(major) + "." + str(minor) + "." + str(patch)
+    if len(prerelease) > 0
+        raw_val += "-" + prerelease
+    end
+    if len(build) > 0
+        raw_val += "+" + build
+    end
+    return Version(major, minor, patch, prerelease, build, raw_val)
+end
+
+function to_string(v)
+    return format(v)
+end
+
+function format(v)
+    let s = str(v.major) + "." + str(v.minor) + "." + str(v.patch)
+    if len(v.prerelease) > 0
+        s += "-" + v.prerelease
+    end
+    if len(v.build) > 0
+        s += "+" + v.build
+    end
+    return s
+end
+
+function is_valid(v_str)
+    let s = clean(v_str)
+    if len(s) == 0
+        return 0
+    end
+
+    let plus_idx = _sv_index_of(s, "+")
+    if plus_idx >= 0
+        s = substring(s, 0, plus_idx)
+    end
+
+    let dash_idx = _sv_index_of(s, "-")
+    if dash_idx >= 0
+        s = substring(s, 0, dash_idx)
+    end
+
+    let parts = _sv_split_char(s, ".")
+    if arr_len(parts) < 1 or arr_len(parts) > 3
+        return 0
+    end
+
+    let i = 0
+    while i < arr_len(parts)
+        if _sv_is_all_digits(parts[i]) == 0
+            return 0
+        end
+        i += 1
+    end
+    return 1
+end
+
+# ─────────────────────────────────────────────────────────────
+# Comparison & Precedence (SemVer 2.0.0 Section 11)
+# ─────────────────────────────────────────────────────────────
+
+function _sv_cmp_identifier(id1, id2)
+    let is_num1 = _sv_is_all_digits(id1)
+    let is_num2 = _sv_is_all_digits(id2)
+
+    if is_num1 == 1 and is_num2 == 1
+        let n1 = to_int(id1)
+        let n2 = to_int(id2)
+        if n1 < n2
+            return -1
+        elif n1 > n2
+            return 1
+        else
+            return 0
+        end
+    elif is_num1 == 1 and is_num2 == 0
+        # Numeric identifiers have lower precedence than non-numeric identifiers
+        return -1
+    elif is_num1 == 0 and is_num2 == 1
+        return 1
+    else
+        # Lexical comparison
+        if id1 < id2
+            return -1
+        elif id1 > id2
+            return 1
+        else
+            return 0
+        end
+    end
+end
+
+function _sv_cmp_prerelease(pre1, pre2)
+    if len(pre1) == 0 and len(pre2) == 0
+        return 0
+    elif len(pre1) == 0 and len(pre2) > 0
+        # Normal version has higher precedence than pre-release version
+        return 1
+    elif len(pre1) > 0 and len(pre2) == 0
+        return -1
+    end
+
+    let parts1 = _sv_split_char(pre1, ".")
+    let parts2 = _sv_split_char(pre2, ".")
+    let len1 = arr_len(parts1)
+    let len2 = arr_len(parts2)
+    let min_len = len1
+    if len2 < min_len
+        min_len = len2
+    end
+
+    let i = 0
+    while i < min_len
+        let diff = _sv_cmp_identifier(parts1[i], parts2[i])
+        if diff != 0
+            return diff
+        end
+        i += 1
+    end
+
+    if len1 < len2
+        return -1
+    elif len1 > len2
+        return 1
+    else
+        return 0
+    end
+end
+
+function compare(v1_in, v2_in)
+    let v1 = v1_in
+    let v2 = v2_in
+
+    # Compare Major
+    if v1.major < v2.major
+        return -1
+    elif v1.major > v2.major
+        return 1
+    end
+
+    # Compare Minor
+    if v1.minor < v2.minor
+        return -1
+    elif v1.minor > v2.minor
+        return 1
+    end
+
+    # Compare Patch
+    if v1.patch < v2.patch
+        return -1
+    elif v1.patch > v2.patch
+        return 1
+    end
+
+    # Compare Pre-release
+    return _sv_cmp_prerelease(v1.prerelease, v2.prerelease)
+end
+
+function compare_strings(s1, s2)
+    let v1 = parse(s1)
+    let v2 = parse(s2)
+    return compare(v1, v2)
+end
+
+function eq(v1, v2)
+    return compare(v1, v2) == 0
+end
+
+function neq(v1, v2)
+    return compare(v1, v2) != 0
+end
+
+function gt(v1, v2)
+    return compare(v1, v2) > 0
+end
+
+function gte(v1, v2)
+    return compare(v1, v2) >= 0
+end
+
+function lt(v1, v2)
+    return compare(v1, v2) < 0
+end
+
+function lte(v1, v2)
+    return compare(v1, v2) <= 0
+end
+
+function max(v1, v2)
+    if compare(v1, v2) >= 0
+        return v1
+    end
+    return v2
+end
+
+function min(v1, v2)
+    if compare(v1, v2) <= 0
+        return v1
+    end
+    return v2
+end
+
+# ─────────────────────────────────────────────────────────────
+# Version Bumping
+# ─────────────────────────────────────────────────────────────
+
+function bump_major(v)
+    return Version(v.major + 1, 0, 0, "", "", str(v.major + 1) + ".0.0")
+end
+
+function bump_minor(v)
+    return Version(v.major, v.minor + 1, 0, "", "", str(v.major) + "." + str(v.minor + 1) + ".0")
+end
+
+function bump_patch(v)
+    return Version(v.major, v.minor, v.patch + 1, "", "", str(v.major) + "." + str(v.minor) + "." + str(v.patch + 1))
+end
+
+function bump_prerelease(v, tag = "alpha")
+    let pre = tag + ".1"
+    if len(v.prerelease) > 0
+        let parts = _sv_split_char(v.prerelease, ".")
+        let plen = arr_len(parts)
+        if plen >= 2
+            let last_part = parts[plen - 1]
+            if _sv_is_all_digits(last_part) == 1
+                let next_num = to_int(last_part) + 1
+                let new_pre = parts[0]
+                let pi = 1
+                while pi < plen - 1
+                    new_pre += "." + parts[pi]
+                    pi += 1
+                end
+                new_pre += "." + str(next_num)
+                pre = new_pre
+            end
+        end
+    end
+    let raw_val = str(v.major) + "." + str(v.minor) + "." + str(v.patch) + "-" + pre
+    return Version(v.major, v.minor, v.patch, pre, "", raw_val)
+end
+
+function bump(v, release_type)
+    when release_type
+        is "major" then return bump_major(v)
+        is "minor" then return bump_minor(v)
+        is "patch" then return bump_patch(v)
+        is "prerelease" then return bump_prerelease(v)
+        else return v
+    end
+end
+
+function diff(v1, v2)
+    if v1.major != v2.major
+        return "major"
+    elif v1.minor != v2.minor
+        return "minor"
+    elif v1.patch != v2.patch
+        return "patch"
+    elif v1.prerelease != v2.prerelease
+        return "prerelease"
+    else
+        return ""
+    end
+end
+
+# ─────────────────────────────────────────────────────────────
+# Range Satisfaction
+# ─────────────────────────────────────────────────────────────
+
+function _sv_check_simple_constraint(v, op, target_str)
+    let target = parse(target_str)
+    let cmp = compare(v, target)
+    when op
+        is "=" then return cmp == 0
+        is "==" then return cmp == 0
+        is "!=" then return cmp != 0
+        is ">" then return cmp > 0
+        is ">=" then return cmp >= 0
+        is "<" then return cmp < 0
+        is "<=" then return cmp <= 0
+        else return 0
+    end
+end
+
+function _sv_satisfies_comparator(v, comp)
+    let c = _sv_trim(comp)
+    if len(c) == 0 or c == "*" or c == "x" or c == "X"
+        return 1
+    end
+
+    # Caret Range (^1.2.3)
+    if _sv_starts_with(c, "^")
+        let base_str = _sv_trim(substring(c, 1, len(c) - 1))
+        let base = parse(base_str)
+        if compare(v, base) < 0
+            return 0
+        end
+        if base.major > 0
+            let upper = Version(base.major + 1, 0, 0, "0", "", "")
+            return compare(v, upper) < 0
+        elif base.minor > 0
+            let upper = Version(0, base.minor + 1, 0, "0", "", "")
+            return compare(v, upper) < 0
+        else
+            let upper = Version(0, 0, base.patch + 1, "0", "", "")
+            return compare(v, upper) < 0
+        end
+    end
+
+    # Tilde Range (~1.2.3 or ~1.2)
+    if _sv_starts_with(c, "~")
+        let base_str = _sv_trim(substring(c, 1, len(c) - 1))
+        let base = parse(base_str)
+        if compare(v, base) < 0
+            return 0
+        end
+        let upper = Version(base.major, base.minor + 1, 0, "0", "", "")
+        return compare(v, upper) < 0
+    end
+
+    # Explicit operators
+    if _sv_starts_with(c, ">=")
+        return _sv_check_simple_constraint(v, ">=", _sv_trim(substring(c, 2, len(c) - 2)))
+    elif _sv_starts_with(c, "<=")
+        return _sv_check_simple_constraint(v, "<=", _sv_trim(substring(c, 2, len(c) - 2)))
+    elif _sv_starts_with(c, "!=")
+        return _sv_check_simple_constraint(v, "!=", _sv_trim(substring(c, 2, len(c) - 2)))
+    elif _sv_starts_with(c, "==")
+        return _sv_check_simple_constraint(v, "==", _sv_trim(substring(c, 2, len(c) - 2)))
+    elif _sv_starts_with(c, ">")
+        return _sv_check_simple_constraint(v, ">", _sv_trim(substring(c, 1, len(c) - 1)))
+    elif _sv_starts_with(c, "<")
+        return _sv_check_simple_constraint(v, "<", _sv_trim(substring(c, 1, len(c) - 1)))
+    elif _sv_starts_with(c, "=")
+        return _sv_check_simple_constraint(v, "=", _sv_trim(substring(c, 1, len(c) - 1)))
+    end
+
+    # Wildcard prefix like 1.* or 1.x
+    let dot_parts = _sv_split_char(c, ".")
+    let dlen = arr_len(dot_parts)
+    if dlen == 2
+        let p1 = dot_parts[1]
+        if p1 == "*" or p1 == "x" or p1 == "X"
+            let maj = to_int(dot_parts[0])
+            return v.major == maj
+        end
+    elif dlen >= 3
+        let p2 = dot_parts[2]
+        if p2 == "*" or p2 == "x" or p2 == "X"
+            let maj = to_int(dot_parts[0])
+            let min = to_int(dot_parts[1])
+            return v.major == maj and v.minor == min
+        end
+    end
+
+    # Plain exact match
+    return _sv_check_simple_constraint(v, "=", c)
+end
+
+function _sv_satisfies_conjunction(v, conj_str)
+    let parts = _sv_split_char(conj_str, " ")
+    let i = 0
+    while i < arr_len(parts)
+        let item = _sv_trim(parts[i])
+        if len(item) > 0
+            if _sv_satisfies_comparator(v, item) == 0
+                return 0
+            end
+        end
+        i += 1
+    end
+    return 1
+end
+
+function satisfies(v_in, range_str)
+    let v = v_in
+    let r = _sv_trim(range_str)
+    if len(r) == 0 or r == "*"
+        return 1
+    end
+
+    # Check for OR pipes: "||"
+    let or_branches = []
+    let cur_branch = ""
+    let ri = 0
+    let rlen = len(r)
+    while ri < rlen
+        if ri + 1 < rlen and char_at(r, ri) == "|" and char_at(r, ri + 1) == "|"
+            or_branches.push(_sv_trim(cur_branch))
+            cur_branch = ""
+            ri += 2
+        else
+            cur_branch += char_at(r, ri)
+            ri += 1
+        end
+    end
+    or_branches.push(_sv_trim(cur_branch))
+
+    let bi = 0
+    while bi < arr_len(or_branches)
+        let b = or_branches[bi]
+        if len(b) > 0
+            if _sv_satisfies_conjunction(v, b) == 1
+                return 1
+            end
+        end
+        bi += 1
+    end
+
+    return 0
+end
+
+function satisfies_string(v_str, range_str)
+    let v = parse(v_str)
+    return satisfies(v, range_str)
+end
+

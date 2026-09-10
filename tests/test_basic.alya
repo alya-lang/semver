@@ -1,32 +1,185 @@
-# Test suite for semver
-import "std/color"
-import "../src/lib.alya" as pkg
+# ═══════════════════════════════════════════════════════════════
+# Alya SemVer Test Suite
+# ═══════════════════════════════════════════════════════════════
 
-function test_hello()
-    let res = pkg::hello("Alya")
-    if res == "Hello, Alya!"
-        say color_green("✓ test_hello passed")
+import "std/color"
+import "../src/lib.alya" as semver
+
+function assert_test(name, cond, details = "")
+    if cond == 1
+        say color_green("  ✓ ") + name
         return 1
     else
-        say color_red("✗ test_hello failed: ") + res
+        say color_red("  ✗ ") + name + color_red(" (FAILED: ") + details + color_red(")")
         return 0
     end
 end
 
-function main()
-    say color_cyan("[TEST]") + " Running semver test suite..."
+function test_parsing_and_formatting()
     let passed = 0
-    let total = 1
+    let v1 = semver::parse("1.2.3")
+    passed += assert_test("parse basic major", v1.major == 1, str(v1.major))
+    passed += assert_test("parse basic minor", v1.minor == 2, str(v1.minor))
+    passed += assert_test("parse basic patch", v1.patch == 3, str(v1.patch))
+    passed += assert_test("format basic", semver::format(v1) == "1.2.3", semver::format(v1))
 
-    passed += test_hello()
+    let v2 = semver::parse("v2.4.6-alpha.1+build.2026")
+    passed += assert_test("parse v prefix", v2.major == 2 and v2.minor == 4 and v2.patch == 6, str(v2.major))
+    passed += assert_test("parse prerelease", v2.prerelease == "alpha.1", v2.prerelease)
+    passed += assert_test("parse build meta", v2.build == "build.2026", v2.build)
+    passed += assert_test("format complex", semver::format(v2) == "2.4.6-alpha.1+build.2026", semver::format(v2))
+
+    let v3 = semver::parse("3.8")
+    passed += assert_test("parse loose 2-parts", v3.major == 3 and v3.minor == 8 and v3.patch == 0, semver::format(v3))
+
+    return passed
+end
+
+function test_validation()
+    let passed = 0
+    passed += assert_test("valid 1.0.0", semver::is_valid("1.0.0") == 1, "failed")
+    passed += assert_test("valid v2.3.4", semver::is_valid("v2.3.4") == 1, "failed")
+    passed += assert_test("valid with prerelease", semver::is_valid("1.0.0-rc.1") == 1, "failed")
+    passed += assert_test("invalid non-number", semver::is_valid("a.b.c") == 0, "failed")
+    passed += assert_test("invalid empty", semver::is_valid("") == 0, "failed")
+    return passed
+end
+
+function test_comparison()
+    let passed = 0
+    let v1 = semver::parse("1.0.0")
+    let v2 = semver::parse("2.0.0")
+    let v3 = semver::parse("1.1.0")
+    let v4 = semver::parse("1.0.1")
+
+    passed += assert_test("compare major 1 < 2", semver::compare(v1, v2) == -1, "failed")
+    passed += assert_test("compare major 2 > 1", semver::compare(v2, v1) == 1, "failed")
+    passed += assert_test("compare minor 1.1.0 > 1.0.0", semver::compare(v3, v1) == 1, "failed")
+    passed += assert_test("compare patch 1.0.1 > 1.0.0", semver::compare(v4, v1) == 1, "failed")
+    passed += assert_test("compare equal", semver::compare(v1, semver::parse("1.0.0")) == 0, "failed")
+
+    # SemVer Spec: 1.0.0-alpha < 1.0.0
+    let v_pre = semver::parse("1.0.0-alpha")
+    passed += assert_test("prerelease lower than normal", semver::compare(v_pre, v1) == -1, "failed")
+
+    # SemVer Spec: 1.0.0-alpha < 1.0.0-alpha.1 < 1.0.0-beta < 1.0.0-beta.2 < 1.0.0-beta.11 < 1.0.0-rc.1 < 1.0.0
+    let v_a = semver::parse("1.0.0-alpha")
+    let v_a1 = semver::parse("1.0.0-alpha.1")
+    let v_b = semver::parse("1.0.0-beta")
+    let v_b2 = semver::parse("1.0.0-beta.2")
+    let v_b11 = semver::parse("1.0.0-beta.11")
+    let v_rc = semver::parse("1.0.0-rc.1")
+
+    passed += assert_test("precedence alpha < alpha.1", semver::lt(v_a, v_a1) == 1, "failed")
+    passed += assert_test("precedence alpha.1 < beta", semver::lt(v_a1, v_b) == 1, "failed")
+    passed += assert_test("precedence beta < beta.2", semver::lt(v_b, v_b2) == 1, "failed")
+    passed += assert_test("precedence numeric beta.2 < beta.11", semver::lt(v_b2, v_b11) == 1, "failed")
+    passed += assert_test("precedence beta.11 < rc.1", semver::lt(v_b11, v_rc) == 1, "failed")
+
+    # Build metadata ignored
+    let v_b1 = semver::parse("1.0.0+build.1")
+    let v_b2 = semver::parse("1.0.0+build.2")
+    passed += assert_test("build metadata ignored in comparison", semver::eq(v_b1, v_b2) == 1, "failed")
+
+    return passed
+end
+
+function test_bumping_and_diff()
+    let passed = 0
+    let v = semver::parse("1.2.3")
+
+    let v_maj = semver::bump_major(v)
+    passed += assert_test("bump major", semver::format(v_maj) == "2.0.0", semver::format(v_maj))
+
+    let v_min = semver::bump_minor(v)
+    passed += assert_test("bump minor", semver::format(v_min) == "1.3.0", semver::format(v_min))
+
+    let v_pat = semver::bump_patch(v)
+    passed += assert_test("bump patch", semver::format(v_pat) == "1.2.4", semver::format(v_pat))
+
+    let v_pre1 = semver::bump_prerelease(v, "alpha")
+    passed += assert_test("bump prerelease initial", semver::format(v_pre1) == "1.2.3-alpha.1", semver::format(v_pre1))
+
+    let v_pre2 = semver::bump_prerelease(v_pre1)
+    passed += assert_test("bump prerelease increment", semver::format(v_pre2) == "1.2.3-alpha.2", semver::format(v_pre2))
+
+    passed += assert_test("diff major", semver::diff(v, v_maj) == "major", semver::diff(v, v_maj))
+    passed += assert_test("diff minor", semver::diff(v, v_min) == "minor", semver::diff(v, v_min))
+    passed += assert_test("diff patch", semver::diff(v, v_pat) == "patch", semver::diff(v, v_pat))
+
+    return passed
+end
+
+function test_range_satisfaction()
+    let passed = 0
+
+    # Exact & comparators
+    passed += assert_test("satisfies exact", semver::satisfies_string("1.2.3", "1.2.3") == 1, "failed")
+    passed += assert_test("satisfies exact with equal", semver::satisfies_string("1.2.3", "=1.2.3") == 1, "failed")
+    passed += assert_test("satisfies gte true", semver::satisfies_string("1.5.0", ">=1.2.0") == 1, "failed")
+    passed += assert_test("satisfies gte false", semver::satisfies_string("1.1.0", ">=1.2.0") == 0, "failed")
+
+    # Conjunction (AND)
+    passed += assert_test("satisfies conjunction in range", semver::satisfies_string("1.5.0", ">=1.0.0 <2.0.0") == 1, "failed")
+    passed += assert_test("satisfies conjunction out of range", semver::satisfies_string("2.0.0", ">=1.0.0 <2.0.0") == 0, "failed")
+
+    # Caret (^)
+    passed += assert_test("satisfies caret patch", semver::satisfies_string("1.2.4", "^1.2.3") == 1, "failed")
+    passed += assert_test("satisfies caret minor", semver::satisfies_string("1.9.0", "^1.2.3") == 1, "failed")
+    passed += assert_test("satisfies caret major breaking", semver::satisfies_string("2.0.0", "^1.2.3") == 0, "failed")
+    passed += assert_test("satisfies caret zero minor allowed", semver::satisfies_string("0.2.5", "^0.2.3") == 1, "failed")
+    passed += assert_test("satisfies caret zero minor breaking", semver::satisfies_string("0.3.0", "^0.2.3") == 0, "failed")
+
+    # Tilde (~)
+    passed += assert_test("satisfies tilde patch allowed", semver::satisfies_string("1.2.9", "~1.2.3") == 1, "failed")
+    passed += assert_test("satisfies tilde minor breaking", semver::satisfies_string("1.3.0", "~1.2.3") == 0, "failed")
+
+    # Wildcards
+    passed += assert_test("satisfies wildcard 1.*", semver::satisfies_string("1.9.9", "1.*") == 1, "failed")
+    passed += assert_test("satisfies wildcard star all", semver::satisfies_string("4.2.0", "*") == 1, "failed")
+
+    # Pipe (OR)
+    passed += assert_test("satisfies pipe branch 1", semver::satisfies_string("1.5.0", "^1.0.0 || ^2.0.0") == 1, "failed")
+    passed += assert_test("satisfies pipe branch 2", semver::satisfies_string("2.5.0", "^1.0.0 || ^2.0.0") == 1, "failed")
+    passed += assert_test("satisfies pipe outside", semver::satisfies_string("3.0.0", "^1.0.0 || ^2.0.0") == 0, "failed")
+
+    return passed
+end
+
+function main()
+    say color_cyan("═══════════════════════════════════════════════════")
+    say color_cyan("          Alya SemVer Package Test Suite           ")
+    say color_cyan("═══════════════════════════════════════════════════")
+    say ""
+
+    let passed = 0
+    let total = 52
+
+    say color_yellow("[1/5] Testing Parsing & Formatting...")
+    passed += test_parsing_and_formatting()
+
+    say color_yellow("[2/5] Testing Validation...")
+    passed += test_validation()
+
+    say color_yellow("[3/5] Testing SemVer 2.0.0 Comparison & Precedence...")
+    passed += test_comparison()
+
+    say color_yellow("[4/5] Testing Version Bumping & Diff...")
+    passed += test_bumping_and_diff()
+
+    say color_yellow("[5/5] Testing Range Satisfaction (^, ~, >=, <=, ||)...")
+    passed += test_range_satisfaction()
 
     say ""
+    say color_cyan("───────────────────────────────────────────────────")
     if passed == total
-        say color_green("[PASS] All " + str(total) + " tests passed successfully!")
+        say color_green("All " + str(total) + " tests passed successfully! ✓")
     else
-        say color_red("[FAIL] " + str(total - passed) + " tests failed!")
+        say color_red(str(total - passed) + " tests failed out of " + str(total))
         exit(1)
     end
+    say color_cyan("═══════════════════════════════════════════════════")
 end
 
 main()
+

@@ -11,23 +11,31 @@ Semantic Versioning (SemVer 2.0.0) parser, comparator, and range satisfaction li
 
 ## 🌟 Features
 
-- ⚡ **Lightweight & Fast**: Built for speed with minimal overhead
-- 📦 **Zero Dependencies**: Pure Alya code, entirely self-contained
-- 🛡️ **Reliable**: Fully typed API and predictable behavior
-- 🧪 **Well Tested**: Comprehensive test suite included
+- 📜 **Full SemVer 2.0.0 Compliance**: Implements Section 11 precedence, pre-release tags, and build metadata.
+- 🎯 **Smart Parser**: Handles standard (`1.2.3`), prefixed (`v1.2.3`, `=1.2.3`), loose (`1.2`), and pre-release/build versions.
+- ⚖️ **Precise Comparators**: `compare`, `eq`, `neq`, `gt`, `gte`, `lt`, `lte`, `min`, `max`.
+- 📐 **Advanced Range Satisfaction (`satisfies`)**:
+  - Exact & Comparators: `1.2.3`, `>=1.0.0`, `<=2.0.0`, `!=1.5.0`
+  - Conjunctions (AND): `>=1.0.0 <2.0.0`
+  - Caret Ranges (`^`): `^1.2.3`, `^0.2.3`, `^0.0.3`
+  - Tilde Ranges (`~`): `~1.2.3`, `~1.2`
+  - Wildcards: `1.*`, `1.x`, `*`
+  - Union Ranges (OR): `^1.0.0 || ^2.0.0`
+- 🚀 **Version Bumping**: `bump_major`, `bump_minor`, `bump_patch`, `bump_prerelease`.
+- 📦 **Zero Dependencies**: 100% pure Alya code.
 
 ---
 
 ## 📦 Installation
 
-Add `semver` to the `[dependencies]` section in your `alya.toml`:
+Add `semver` to your `alya.toml`:
 
 ```toml
 [dependencies]
 semver = { git = "https://github.com/alya-lang/semver", tag = "v0.1.0" }
 ```
 
-Or install it directly using the Alya package CLI:
+Or install via Alya CLI:
 
 ```bash
 alyac add semver --git https://github.com/alya-lang/semver --tag v0.1.0
@@ -39,11 +47,31 @@ alyac install
 ## 🚀 Quick Start
 
 ```alya
-import "semver" as pkg
+import "semver"
 
 function main()
-    let greeting = pkg::hello("Alya")
-    say greeting
+    # 1. Parse version
+    let v = semver::parse("v1.5.0-rc.1+sha.abcdef")
+    say "Major: " + str(v.major)     # 1
+    say "Minor: " + str(v.minor)     # 5
+    say "Patch: " + str(v.patch)     # 0
+    say "Pre:   " + v.prerelease     # rc.1
+
+    # 2. Compare versions
+    let v1 = semver::parse("1.0.0-alpha")
+    let v2 = semver::parse("1.0.0")
+    if semver::lt(v1, v2)
+        say "1.0.0-alpha is older than 1.0.0"
+    end
+
+    # 3. Check dependency range compatibility
+    if semver::satisfies_string("1.5.2", "^1.2.0")
+        say "Compatible with ^1.2.0!"
+    end
+
+    # 4. Bump version
+    let next_v = semver::bump_minor(v2)
+    say semver::format(next_v)       # 1.1.0
 end
 
 main()
@@ -53,9 +81,43 @@ main()
 
 ## 📖 API Reference
 
-| Function | Arguments | Returns | Description |
-|---|---|---|---|
-| `hello(name)` | `name: string = "World"` | `string` | Returns a friendly greeting message. |
+### Core Functions
+
+| Function | Signature | Description |
+|---|---|---|
+| `parse(v_str)` | `(string) -> Version` | Parses a SemVer string into a `Version` struct. |
+| `create(maj, min, pat, pre, build)` | `(int, int, int, string, string) -> Version` | Creates a new `Version` instance. |
+| `format(v)` / `to_string(v)` | `(Version) -> string` | Formats a `Version` struct into standard string representation. |
+| `clean(v_str)` | `(string) -> string` | Strips whitespace, `= `, and leading `v`/`V`. |
+| `is_valid(v_str)` | `(string) -> int` | Returns `1` if string is valid SemVer, `0` otherwise. |
+
+### Comparisons
+
+| Function | Signature | Description |
+|---|---|---|
+| `compare(v1, v2)` | `(Version, Version) -> int` | Returns `-1` (`v1 < v2`), `0` (`v1 == v2`), or `1` (`v1 > v2`). |
+| `compare_strings(s1, s2)` | `(string, string) -> int` | Parses and compares two SemVer strings directly. |
+| `eq(v1, v2)` | `(Version, Version) -> int` | Returns `1` if `v1 == v2`. |
+| `neq(v1, v2)` | `(Version, Version) -> int` | Returns `1` if `v1 != v2`. |
+| `gt(v1, v2)` | `(Version, Version) -> int` | Returns `1` if `v1 > v2`. |
+| `gte(v1, v2)` | `(Version, Version) -> int` | Returns `1` if `v1 >= v2`. |
+| `lt(v1, v2)` | `(Version, Version) -> int` | Returns `1` if `v1 < v2`. |
+| `lte(v1, v2)` | `(Version, Version) -> int` | Returns `1` if `v1 <= v2`. |
+| `max(v1, v2)` | `(Version, Version) -> Version` | Returns the higher version. |
+| `min(v1, v2)` | `(Version, Version) -> Version` | Returns the lower version. |
+
+### Range Matching & Bumping
+
+| Function | Signature | Description |
+|---|---|---|
+| `satisfies(v, range_str)` | `(Version, string) -> int` | Returns `1` if `v` satisfies the given range expression. |
+| `satisfies_string(s, range_str)` | `(string, string) -> int` | Convenience method checking string version against range. |
+| `bump_major(v)` | `(Version) -> Version` | Increments major, resets minor & patch to 0. |
+| `bump_minor(v)` | `(Version) -> Version` | Increments minor, resets patch to 0. |
+| `bump_patch(v)` | `(Version) -> Version` | Increments patch version. |
+| `bump_prerelease(v, tag)` | `(Version, string) -> Version` | Increments or initializes prerelease identifier. |
+| `bump(v, type)` | `(Version, string) -> Version` | Bumps version according to release type (`"major"`, `"minor"`, `"patch"`, `"prerelease"`). |
+| `diff(v1, v2)` | `(Version, Version) -> string` | Returns difference level (`"major"`, `"minor"`, `"patch"`, `"prerelease"`, or `""`). |
 
 ---
 
