@@ -597,4 +597,3 @@ function satisfies_string(v_str, range_str)
     let v = parse(v_str)
     return satisfies(v, range_str)
 end
-
