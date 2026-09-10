@@ -1,0 +1,50 @@
+# Benchmark suite for semver
+import "std/bench"
+import "../src/lib.alya" as semver
+
+function main()
+    let runner = bench_runner("Alya SemVer Micro-Benchmarks")
+
+    # 1. Parsing benchmark
+    bench_start(runner, 50000)
+    let i = 0
+    while i < 50000
+        semver::parse("1.2.3-beta.1+build.42")
+        i += 1
+    end
+    bench_stop(runner, "semver::parse (complex)")
+
+    # 2. Precedence Comparison benchmark
+    let v1 = semver::parse("1.2.3")
+    let v2 = semver::parse("1.2.4")
+    bench_start(runner, 100000)
+    let j = 0
+    while j < 100000
+        semver::compare(v1, v2)
+        j += 1
+    end
+    bench_stop(runner, "semver::compare (precedence)")
+
+    # 3. Range satisfaction benchmark (^caret range)
+    bench_start(runner, 50000)
+    let k = 0
+    while k < 50000
+        semver::satisfies("1.2.3", "^1.2.0")
+        k += 1
+    end
+    bench_stop(runner, "semver::satisfies (^1.2.0)")
+
+    # 4. Version bump benchmark
+    let v = semver::parse("1.2.3")
+    bench_start(runner, 50000)
+    let m = 0
+    while m < 50000
+        semver::bump_minor(v)
+        m += 1
+    end
+    bench_stop(runner, "semver::bump_minor")
+
+    bench_summary(runner)
+end
+
+main()
