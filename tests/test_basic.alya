@@ -10,13 +10,13 @@ function test_parsing_and_formatting(r)
     runner_assert_eq(r, v1.major, 1, "parse basic major")
     runner_assert_eq(r, v1.minor, 2, "parse basic minor")
     runner_assert_eq(r, v1.patch, 3, "parse basic patch")
-    runner_assert_eq(r, semver::format(v1), "1.2.3", "format basic")
+    runner_assert_str_eq(r, semver::format(v1), "1.2.3", "format basic")
 
     let v2 = semver::parse("v2.4.6-alpha.1+build.2026")
     runner_assert(r, v2.major == 2 and v2.minor == 4 and v2.patch == 6, "parse v prefix")
-    runner_assert_eq(r, v2.prerelease, "alpha.1", "parse prerelease")
-    runner_assert_eq(r, v2.build, "build.2026", "parse build meta")
-    runner_assert_eq(r, semver::format(v2), "2.4.6-alpha.1+build.2026", "format complex")
+    runner_assert_str_eq(r, v2.prerelease, "alpha.1", "parse prerelease")
+    runner_assert_str_eq(r, v2.build, "build.2026", "parse build meta")
+    runner_assert_str_eq(r, semver::format(v2), "2.4.6-alpha.1+build.2026", "format complex")
 
     let v3 = semver::parse("3.8")
     runner_assert(r, v3.major == 3 and v3.minor == 8 and v3.patch == 0, "parse loose 2-parts")
@@ -70,23 +70,23 @@ function test_bumping_and_diff(r)
     let v = semver::parse("1.2.3")
 
     let v_maj = semver::bump_major(v)
-    runner_assert_eq(r, semver::format(v_maj), "2.0.0", "bump major")
+    runner_assert_str_eq(r, semver::format(v_maj), "2.0.0", "bump major")
 
     let v_min = semver::bump_minor(v)
-    runner_assert_eq(r, semver::format(v_min), "1.3.0", "bump minor")
+    runner_assert_str_eq(r, semver::format(v_min), "1.3.0", "bump minor")
 
     let v_pat = semver::bump_patch(v)
-    runner_assert_eq(r, semver::format(v_pat), "1.2.4", "bump patch")
+    runner_assert_str_eq(r, semver::format(v_pat), "1.2.4", "bump patch")
 
     let v_pre1 = semver::bump_prerelease(v, "alpha")
-    runner_assert_eq(r, semver::format(v_pre1), "1.2.3-alpha.1", "bump prerelease initial")
+    runner_assert_str_eq(r, semver::format(v_pre1), "1.2.3-alpha.1", "bump prerelease initial")
 
     let v_pre2 = semver::bump_prerelease(v_pre1)
-    runner_assert_eq(r, semver::format(v_pre2), "1.2.3-alpha.2", "bump prerelease increment")
+    runner_assert_str_eq(r, semver::format(v_pre2), "1.2.3-alpha.2", "bump prerelease increment")
 
-    runner_assert_eq(r, semver::diff(v, v_maj), "major", "diff major")
-    runner_assert_eq(r, semver::diff(v, v_min), "minor", "diff minor")
-    runner_assert_eq(r, semver::diff(v, v_pat), "patch", "diff patch")
+    runner_assert_str_eq(r, semver::diff(v, v_maj), "major", "diff major")
+    runner_assert_str_eq(r, semver::diff(v, v_min), "minor", "diff minor")
+    runner_assert_str_eq(r, semver::diff(v, v_pat), "patch", "diff patch")
 end
 
 function test_range_satisfaction(r)
