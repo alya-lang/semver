@@ -1,0 +1,6 @@
+# semver library
+# Part of the Alya Language package ecosystem (https://github.com/alya-lang)
+
+function hello(name = "World")
+    return "Hello, " + name + "!"
+end

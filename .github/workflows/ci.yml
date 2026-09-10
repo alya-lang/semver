@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master, develop]
+  pull_request:
+    branches: [main, master, develop]
+
+jobs:
+  test:
+    name: Test on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Alya Compiler
+        uses: actions/cache@v4
+        id: cache-alyac
+        with:
+          path: ~/.cargo/bin/alyac*
+          key: ${{ runner.os }}-alyac-compiler
+
+      - name: Install Alya Compiler (alyac)
+        if: steps.cache-alyac.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          cargo install --git https://github.com/alya-lang/alya --bin alyac
+
+      - name: Verify alyac installation
+        run: |
+          alyac --version
+
+      - name: Check package manifest
+        run: |
+          alyac pkg list
+
+      - name: Run package test suite
+        run: |
+          alyac run tests/test_basic.alya

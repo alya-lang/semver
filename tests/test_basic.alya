@@ -1,0 +1,32 @@
+# Test suite for semver
+import "std/color"
+import "../src/lib.alya" as pkg
+
+function test_hello()
+    let res = pkg::hello("Alya")
+    if res == "Hello, Alya!"
+        say color_green("✓ test_hello passed")
+        return 1
+    else
+        say color_red("✗ test_hello failed: ") + res
+        return 0
+    end
+end
+
+function main()
+    say color_cyan("[TEST]") + " Running semver test suite..."
+    let passed = 0
+    let total = 1
+
+    passed += test_hello()
+
+    say ""
+    if passed == total
+        say color_green("[PASS] All " + str(total) + " tests passed successfully!")
+    else
+        say color_red("[FAIL] " + str(total - passed) + " tests failed!")
+        exit(1)
+    end
+end
+
+main()
