@@ -53,13 +53,13 @@ Add `semver` to your `alya.toml`:
 
 ```toml
 [dependencies]
-semver = { git = "https://github.com/alya-lang/semver", tag = "v0.1.0" }
+semver = { git = "https://github.com/alya-lang/semver", branch = "main" }
 ```
 
 Or install via Alya CLI:
 
 ```bash
-alyac add semver --git https://github.com/alya-lang/semver --tag v0.1.0
+alyac add semver --git https://github.com/alya-lang/semver --branch main
 alyac install
 ```
 
