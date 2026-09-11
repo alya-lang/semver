@@ -22,7 +22,6 @@ Semantic Versioning (SemVer 2.0.0) parser, comparator, and range satisfaction li
   - Wildcards: `1.*`, `1.x`, `*`
   - Union Ranges (OR): `^1.0.0 || ^2.0.0`
 - 🚀 **Version Bumping**: `bump_major`, `bump_minor`, `bump_patch`, `bump_prerelease`.
-- 📦 **Zero Dependencies**: 100% pure Alya code.
 
 ---
 
@@ -167,15 +166,20 @@ alyac run examples/demo.alya
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please follow these steps to contribute:
+Contributions are welcome! Please follow these steps:
 
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/my-new-feature`)
-3. Commit your changes (`git commit -m "feat: add some feature"`)
-4. Push to the branch (`git push origin feature/my-new-feature`)
-5. Open a Pull Request
-
-Please make sure tests pass before submitting a PR.
+1. Fork the repository and clone it locally
+2. Install dependencies:
+   ```bash
+   alyac install
+   ```
+3. Create your feature branch (`git checkout -b feature/my-feature`)
+4. Verify tests and formatting before opening a PR:
+   ```bash
+   alyac test
+   alyac fmt . --check
+   ```
+5. Commit your changes (`git commit -m "feat: add feature"`) and open a Pull Request
 
 ---
 
