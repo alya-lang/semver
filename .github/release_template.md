@@ -1,5 +1,3 @@
-# {{PACKAGE_NAME}} {{TAG}}
-
 {{DESCRIPTION}}
 
 ## 📦 Installation

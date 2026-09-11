@@ -161,7 +161,6 @@ def main():
         template = template_path.read_text(encoding="utf-8")
     else:
         template = (
-            "# {{PACKAGE_NAME}} {{TAG}}\n\n"
             "{{DESCRIPTION}}\n\n"
             "## 📦 Installation\n\n"
             "Add `{{PACKAGE_NAME}}` to your `alya.toml`:\n\n"
