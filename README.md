@@ -2,8 +2,8 @@
 
 [![CI](https://github.com/alya-lang/semver/actions/workflows/ci.yml/badge.svg)](https://github.com/alya-lang/semver/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Alya](https://img.shields.io/badge/Alya-%3E%3D0.0.5-orange.svg)](https://github.com/alya-lang/alya)
-[![Package Version](https://img.shields.io/badge/version-0.1.0-brightgreen.svg)](alya.toml)
+[![Alya](https://img.shields.io/badge/dynamic/toml?url=https%3A%2F%2Fraw.githubusercontent.com%2Falya-lang%2Fsemver%2Fmain%2Falya.toml&query=%24.package.alya-version&label=Alya&color=orange&prefix=%3E%3D)](https://github.com/alya-lang/alya)
+[![Package Version](https://img.shields.io/badge/dynamic/toml?url=https%3A%2F%2Fraw.githubusercontent.com%2Falya-lang%2Fsemver%2Fmain%2Falya.toml&query=%24.package.version&label=version&color=brightgreen)](alya.toml)
 
 Semantic Versioning (SemVer 2.0.0) parser, comparator, and range satisfaction library for Alya
 
