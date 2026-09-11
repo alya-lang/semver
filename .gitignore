@@ -14,6 +14,7 @@ alya.lock
 alya.lock.bak
 *.db
 *.log
+RELEASE_NOTES.md
 
 # Environment configuration files
 .env
