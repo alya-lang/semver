@@ -22,12 +22,20 @@ jobs:
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
 
+      - name: Get latest Alya compiler commit SHA
+        id: alya-sha
+        shell: bash
+        run: |
+          SHA=$(git ls-remote https://github.com/alya-lang/alya refs/heads/main | cut -f1)
+          echo "Resolved Alya main commit: $SHA"
+          echo "sha=$SHA" >> "$GITHUB_OUTPUT"
+
       - name: Cache Alya Compiler
         uses: actions/cache@v4
         id: cache-alyac
         with:
           path: ~/.cargo/bin/alyac*
-          key: ${{ runner.os }}-alyac-compiler-v0.0.5-20260911
+          key: ${{ runner.os }}-alyac-${{ steps.alya-sha.outputs.sha }}
 
       - name: Install Alya Compiler (alyac)
         if: steps.cache-alyac.outputs.cache-hit != 'true'
