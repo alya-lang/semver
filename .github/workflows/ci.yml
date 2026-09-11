@@ -27,7 +27,7 @@ jobs:
         id: cache-alyac
         with:
           path: ~/.cargo/bin/alyac*
-          key: ${{ runner.os }}-alyac-compiler-main
+          key: ${{ runner.os }}-alyac-compiler-v0.0.5-20260911
 
       - name: Install Alya Compiler (alyac)
         if: steps.cache-alyac.outputs.cache-hit != 'true'
