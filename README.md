@@ -26,6 +26,28 @@ Semantic Versioning (SemVer 2.0.0) parser, comparator, and range satisfaction li
 
 ---
 
+## 📁 Project Architecture
+
+```text
+semver/
+├── alya.toml               # Package manifest
+├── src/
+│   ├── lib.alya            # Public API facade
+│   ├── types.alya          # Version struct and string helpers
+│   ├── parser.alya         # Parse, clean, format, and validation
+│   ├── comparator.alya     # Precedence comparison and operators
+│   ├── bumper.alya         # SemVer version bump and diff
+│   └── range.alya          # Caret, tilde, wildcard range satisfaction
+├── examples/
+│   └── demo.alya           # Runnable usage example
+├── tests/
+│   └── test_basic.alya     # Automated test suite
+└── benches/
+    └── bench_basic.alya    # Micro-benchmarks
+```
+
+---
+
 ## 📦 Installation
 
 Add `semver` to your `alya.toml`:
@@ -121,18 +143,24 @@ main()
 
 ---
 
-## 🧪 Running Tests
+## 🧪 Running Tests & Benchmarks
 
-Run the test suite using `alyac`:
+Run the automated test suite:
 
 ```bash
 alyac run tests/test_basic.alya
 ```
 
-Or run directly from the package directory:
+Run the performance micro-benchmarks:
 
 ```bash
-alyac run
+alyac run benches/bench_basic.alya
+```
+
+Run the runnable usage demo:
+
+```bash
+alyac run examples/demo.alya
 ```
 
 ---
