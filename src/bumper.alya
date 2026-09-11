@@ -1,0 +1,65 @@
+# ═══════════════════════════════════════════════════════════════
+# SemVer Version Bumper & Diff Module
+# ═══════════════════════════════════════════════════════════════
+
+import "./types.alya"
+
+function bump_major(v)
+    return Version(v.major + 1, 0, 0, "", "", str(v.major + 1) + ".0.0")
+end
+
+function bump_minor(v)
+    return Version(v.major, v.minor + 1, 0, "", "", str(v.major) + "." + str(v.minor + 1) + ".0")
+end
+
+function bump_patch(v)
+    return Version(v.major, v.minor, v.patch + 1, "", "", str(v.major) + "." + str(v.minor) + "." + str(v.patch + 1))
+end
+
+function bump_prerelease(v, tag = "alpha")
+    let pre = tag + ".1"
+    if len(v.prerelease) > 0
+        let parts = _sv_split_char(v.prerelease, ".")
+        let plen = arr_len(parts)
+        if plen >= 2
+            let last_part = parts[plen - 1]
+            if _sv_is_all_digits(last_part) == 1
+                let next_num = to_int(last_part) + 1
+                let new_pre = parts[0]
+                let pi = 1
+                while pi < plen - 1
+                    new_pre += "." + parts[pi]
+                    pi += 1
+                end
+                new_pre += "." + str(next_num)
+                pre = new_pre
+            end
+        end
+    end
+    let raw_val = str(v.major) + "." + str(v.minor) + "." + str(v.patch) + "-" + pre
+    return Version(v.major, v.minor, v.patch, pre, "", raw_val)
+end
+
+function bump(v, release_type)
+    when release_type
+        is "major" then return bump_major(v)
+        is "minor" then return bump_minor(v)
+        is "patch" then return bump_patch(v)
+        is "prerelease" then return bump_prerelease(v)
+        else return v
+    end
+end
+
+function diff(v1, v2)
+    if v1.major != v2.major
+        return "major"
+    elif v1.minor != v2.minor
+        return "minor"
+    elif v1.patch != v2.patch
+        return "patch"
+    elif v1.prerelease != v2.prerelease
+        return "prerelease"
+    else
+        return ""
+    end
+end

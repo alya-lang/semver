@@ -1,0 +1,113 @@
+# ═══════════════════════════════════════════════════════════════
+# SemVer Types & Low-Level Helpers
+# ═══════════════════════════════════════════════════════════════
+
+struct Version
+    major
+    minor
+    patch
+    prerelease
+    build
+    raw
+end
+
+# ─────────────────────────────────────────────────────────────
+# Internal String & Character Helpers
+# ─────────────────────────────────────────────────────────────
+
+function _sv_trim(s)
+    let slen = len(s)
+    if slen == 0
+        return ""
+    end
+    let start_idx = 0
+    while start_idx < slen
+        let ch = char_at(s, start_idx)
+        if ch != " " and ch != "\t" and ch != "\r" and ch != "\n"
+            break
+        end
+        start_idx += 1
+    end
+    if start_idx >= slen
+        return ""
+    end
+    let end_idx = slen - 1
+    while end_idx >= start_idx
+        let ch = char_at(s, end_idx)
+        if ch != " " and ch != "\t" and ch != "\r" and ch != "\n"
+            break
+        end
+        end_idx -= 1
+    end
+    return substring(s, start_idx, end_idx - start_idx + 1)
+end
+
+function _sv_is_digit(ch)
+    if len(ch) != 1
+        return 0
+    end
+    let c = ord(ch)
+    return c >= 48 and c <= 57
+end
+
+function _sv_is_all_digits(s)
+    let slen = len(s)
+    if slen == 0
+        return 0
+    end
+    let i = 0
+    while i < slen
+        if _sv_is_digit(char_at(s, i)) == 0
+            return 0
+        end
+        i += 1
+    end
+    return 1
+end
+
+function _sv_split_char(s, delim)
+    let res = []
+    let slen = len(s)
+    let cur = ""
+    let i = 0
+    while i < slen
+        let ch = char_at(s, i)
+        if ch == delim
+            res.push(cur)
+            cur = ""
+        else
+            cur += ch
+        end
+        i += 1
+    end
+    res.push(cur)
+    return res
+end
+
+function _sv_index_of(s, needle)
+    let slen = len(s)
+    let nlen = len(needle)
+    if nlen == 0
+        return 0
+    end
+    if nlen > slen
+        return -1
+    end
+    let i = 0
+    while i <= slen - nlen
+        if substring(s, i, nlen) == needle
+            return i
+        end
+        i += 1
+    end
+    return -1
+end
+
+function _sv_starts_with(s, prefix)
+    let plen = len(prefix)
+    let slen = len(s)
+    if plen > slen
+        return 0
+    end
+    return substring(s, 0, plen) == prefix
+end

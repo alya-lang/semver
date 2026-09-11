@@ -1,0 +1,125 @@
+# ═══════════════════════════════════════════════════════════════
+# SemVer Parser & Formatter Module
+# ═══════════════════════════════════════════════════════════════
+
+import "./types.alya"
+
+function clean(v_str)
+    let s = _sv_trim(v_str)
+    if _sv_starts_with(s, "=")
+        s = _sv_trim(substring(s, 1, len(s) - 1))
+    end
+    if _sv_starts_with(s, "v") or _sv_starts_with(s, "V")
+        s = _sv_trim(substring(s, 1, len(s) - 1))
+    end
+    return s
+end
+
+function parse(v_str)
+    let s = clean(v_str)
+    if len(s) == 0
+        return Version(0, 0, 0, "", "", "")
+    end
+
+    let build_meta = ""
+    let plus_idx = _sv_index_of(s, "+")
+    if plus_idx >= 0
+        build_meta = substring(s, plus_idx + 1, len(s) - (plus_idx + 1))
+        s = substring(s, 0, plus_idx)
+    end
+
+    let prerelease = ""
+    let dash_idx = _sv_index_of(s, "-")
+    if dash_idx >= 0
+        prerelease = substring(s, dash_idx + 1, len(s) - (dash_idx + 1))
+        s = substring(s, 0, dash_idx)
+    end
+
+    let parts = _sv_split_char(s, ".")
+    let maj = 0
+    let min = 0
+    let pat = 0
+
+    if arr_len(parts) >= 1
+        if _sv_is_all_digits(parts[0]) == 1
+            maj = to_int(parts[0])
+        end
+    end
+    if arr_len(parts) >= 2
+        if _sv_is_all_digits(parts[1]) == 1
+            min = to_int(parts[1])
+        end
+    end
+    if arr_len(parts) >= 3
+        if _sv_is_all_digits(parts[2]) == 1
+            pat = to_int(parts[2])
+        end
+    end
+
+    let raw_val = str(maj) + "." + str(min) + "." + str(pat)
+    if len(prerelease) > 0
+        raw_val += "-" + prerelease
+    end
+    if len(build_meta) > 0
+        raw_val += "+" + build_meta
+    end
+
+    return Version(maj, min, pat, prerelease, build_meta, raw_val)
+end
+
+function create(major, minor, patch, prerelease = "", build = "")
+    let raw_val = str(major) + "." + str(minor) + "." + str(patch)
+    if len(prerelease) > 0
+        raw_val += "-" + prerelease
+    end
+    if len(build) > 0
+        raw_val += "+" + build
+    end
+    return Version(major, minor, patch, prerelease, build, raw_val)
+end
+
+function to_string(v)
+    return format(v)
+end
+
+function format(v)
+    let s = str(v.major) + "." + str(v.minor) + "." + str(v.patch)
+    if len(v.prerelease) > 0
+        s += "-" + v.prerelease
+    end
+    if len(v.build) > 0
+        s += "+" + v.build
+    end
+    return s
+end
+
+function is_valid(v_str)
+    let s = clean(v_str)
+    if len(s) == 0
+        return 0
+    end
+
+    let plus_idx = _sv_index_of(s, "+")
+    if plus_idx >= 0
+        s = substring(s, 0, plus_idx)
+    end
+
+    let dash_idx = _sv_index_of(s, "-")
+    if dash_idx >= 0
+        s = substring(s, 0, dash_idx)
+    end
+
+    let parts = _sv_split_char(s, ".")
+    if arr_len(parts) < 1 or arr_len(parts) > 3
+        return 0
+    end
+
+    let i = 0
+    while i < arr_len(parts)
+        if _sv_is_all_digits(parts[i]) == 0
+            return 0
+        end
+        i += 1
+    end
+    return 1
+end

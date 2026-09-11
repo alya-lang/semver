@@ -1,0 +1,147 @@
+# ═══════════════════════════════════════════════════════════════
+# SemVer Comparison & Precedence Module (Section 11)
+# ═══════════════════════════════════════════════════════════════
+
+import "./types.alya"
+import "./parser.alya"
+
+function _sv_cmp_identifier(id1, id2)
+    let is_num1 = _sv_is_all_digits(id1)
+    let is_num2 = _sv_is_all_digits(id2)
+
+    if is_num1 == 1 and is_num2 == 1
+        let n1 = to_int(id1)
+        let n2 = to_int(id2)
+        if n1 < n2
+            return -1
+        elif n1 > n2
+            return 1
+        else
+            return 0
+        end
+    elif is_num1 == 1 and is_num2 == 0
+        # Numeric identifiers have lower precedence than non-numeric identifiers
+        return -1
+    elif is_num1 == 0 and is_num2 == 1
+        return 1
+    else
+        # Lexical comparison
+        if id1 < id2
+            return -1
+        elif id1 > id2
+            return 1
+        else
+            return 0
+        end
+    end
+end
+
+function _sv_cmp_prerelease(pre1, pre2)
+    if len(pre1) == 0 and len(pre2) == 0
+        return 0
+    elif len(pre1) == 0 and len(pre2) > 0
+        # Normal version has higher precedence than pre-release version
+        return 1
+    elif len(pre1) > 0 and len(pre2) == 0
+        return -1
+    end
+
+    let parts1 = _sv_split_char(pre1, ".")
+    let parts2 = _sv_split_char(pre2, ".")
+    let len1 = arr_len(parts1)
+    let len2 = arr_len(parts2)
+    let min_len = len1
+    if len2 < min_len
+        min_len = len2
+    end
+
+    let i = 0
+    while i < min_len
+        let diff = _sv_cmp_identifier(parts1[i], parts2[i])
+        if diff != 0
+            return diff
+        end
+        i += 1
+    end
+
+    if len1 < len2
+        return -1
+    elif len1 > len2
+        return 1
+    else
+        return 0
+    end
+end
+
+function compare(v1_in, v2_in)
+    let v1 = v1_in
+    let v2 = v2_in
+
+    # Compare Major
+    if v1.major < v2.major
+        return -1
+    elif v1.major > v2.major
+        return 1
+    end
+
+    # Compare Minor
+    if v1.minor < v2.minor
+        return -1
+    elif v1.minor > v2.minor
+        return 1
+    end
+
+    # Compare Patch
+    if v1.patch < v2.patch
+        return -1
+    elif v1.patch > v2.patch
+        return 1
+    end
+
+    # Compare Pre-release
+    return _sv_cmp_prerelease(v1.prerelease, v2.prerelease)
+end
+
+function compare_strings(s1, s2)
+    let v1 = parse(s1)
+    let v2 = parse(s2)
+    return compare(v1, v2)
+end
+
+function eq(v1, v2)
+    return compare(v1, v2) == 0
+end
+
+function neq(v1, v2)
+    return compare(v1, v2) != 0
+end
+
+function gt(v1, v2)
+    return compare(v1, v2) > 0
+end
+
+function gte(v1, v2)
+    return compare(v1, v2) >= 0
+end
+
+function lt(v1, v2)
+    return compare(v1, v2) < 0
+end
+
+function lte(v1, v2)
+    return compare(v1, v2) <= 0
+end
+
+function max(v1, v2)
+    if compare(v1, v2) >= 0
+        return v1
+    end
+    return v2
+end
+
+function min(v1, v2)
+    if compare(v1, v2) <= 0
+        return v1
+    end
+    return v2
+end

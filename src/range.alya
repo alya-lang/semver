@@ -1,0 +1,155 @@
+# ═══════════════════════════════════════════════════════════════
+# SemVer Range Satisfaction Module (Caret, Tilde, Wildcard, Logical)
+# ═══════════════════════════════════════════════════════════════
+
+import "./types.alya"
+import "./parser.alya"
+import "./comparator.alya"
+
+function _sv_check_simple_constraint(v, op, target_str)
+    let target = parse(target_str)
+    let cmp = compare(v, target)
+    when op
+        is "=" then return cmp == 0
+        is "==" then return cmp == 0
+        is "!=" then return cmp != 0
+        is ">" then return cmp > 0
+        is ">=" then return cmp >= 0
+        is "<" then return cmp < 0
+        is "<=" then return cmp <= 0
+        else return 0
+    end
+end
+
+function _sv_satisfies_comparator(v, comp)
+    let c = _sv_trim(comp)
+    if len(c) == 0 or c == "*" or c == "x" or c == "X"
+        return 1
+    end
+
+    # Caret Range (^1.2.3)
+    if _sv_starts_with(c, "^")
+        let base_str = _sv_trim(substring(c, 1, len(c) - 1))
+        let base = parse(base_str)
+        if compare(v, base) < 0
+            return 0
+        end
+        if base.major > 0
+            let upper = Version(base.major + 1, 0, 0, "0", "", "")
+            return compare(v, upper) < 0
+        elif base.minor > 0
+            let upper = Version(0, base.minor + 1, 0, "0", "", "")
+            return compare(v, upper) < 0
+        else
+            let upper = Version(0, 0, base.patch + 1, "0", "", "")
+            return compare(v, upper) < 0
+        end
+    end
+
+    # Tilde Range (~1.2.3 or ~1.2)
+    if _sv_starts_with(c, "~")
+        let base_str = _sv_trim(substring(c, 1, len(c) - 1))
+        let base = parse(base_str)
+        if compare(v, base) < 0
+            return 0
+        end
+        let upper = Version(base.major, base.minor + 1, 0, "0", "", "")
+        return compare(v, upper) < 0
+    end
+
+    # Explicit operators
+    if _sv_starts_with(c, ">=")
+        return _sv_check_simple_constraint(v, ">=", _sv_trim(substring(c, 2, len(c) - 2)))
+    elif _sv_starts_with(c, "<=")
+        return _sv_check_simple_constraint(v, "<=", _sv_trim(substring(c, 2, len(c) - 2)))
+    elif _sv_starts_with(c, "!=")
+        return _sv_check_simple_constraint(v, "!=", _sv_trim(substring(c, 2, len(c) - 2)))
+    elif _sv_starts_with(c, "==")
+        return _sv_check_simple_constraint(v, "==", _sv_trim(substring(c, 2, len(c) - 2)))
+    elif _sv_starts_with(c, ">")
+        return _sv_check_simple_constraint(v, ">", _sv_trim(substring(c, 1, len(c) - 1)))
+    elif _sv_starts_with(c, "<")
+        return _sv_check_simple_constraint(v, "<", _sv_trim(substring(c, 1, len(c) - 1)))
+    elif _sv_starts_with(c, "=")
+        return _sv_check_simple_constraint(v, "=", _sv_trim(substring(c, 1, len(c) - 1)))
+    end
+
+    # Wildcard prefix like 1.* or 1.x
+    let dot_parts = _sv_split_char(c, ".")
+    let dlen = arr_len(dot_parts)
+    if dlen == 2
+        let p1 = dot_parts[1]
+        if p1 == "*" or p1 == "x" or p1 == "X"
+            let maj = to_int(dot_parts[0])
+            return v.major == maj
+        end
+    elif dlen >= 3
+        let p2 = dot_parts[2]
+        if p2 == "*" or p2 == "x" or p2 == "X"
+            let maj = to_int(dot_parts[0])
+            let min = to_int(dot_parts[1])
+            return v.major == maj and v.minor == min
+        end
+    end
+
+    # Plain exact match
+    return _sv_check_simple_constraint(v, "=", c)
+end
+
+function _sv_satisfies_conjunction(v, conj_str)
+    let parts = _sv_split_char(conj_str, " ")
+    let i = 0
+    while i < arr_len(parts)
+        let item = _sv_trim(parts[i])
+        if len(item) > 0
+            if _sv_satisfies_comparator(v, item) == 0
+                return 0
+            end
+        end
+        i += 1
+    end
+    return 1
+end
+
+function satisfies(v_in, range_str)
+    let v = v_in
+    let r = _sv_trim(range_str)
+    if len(r) == 0 or r == "*"
+        return 1
+    end
+
+    # Check for OR pipes: "||"
+    let or_branches = []
+    let cur_branch = ""
+    let ri = 0
+    let rlen = len(r)
+    while ri < rlen
+        if ri + 1 < rlen and char_at(r, ri) == "|" and char_at(r, ri + 1) == "|"
+            or_branches.push(_sv_trim(cur_branch))
+            cur_branch = ""
+            ri += 2
+        else
+            cur_branch += char_at(r, ri)
+            ri += 1
+        end
+    end
+    or_branches.push(_sv_trim(cur_branch))
+
+    let bi = 0
+    while bi < arr_len(or_branches)
+        let b = or_branches[bi]
+        if len(b) > 0
+            if _sv_satisfies_conjunction(v, b) == 1
+                return 1
+            end
+        end
+        bi += 1
+    end
+
+    return 0
+end
+
+function satisfies_string(v_str, range_str)
+    let v = parse(v_str)
+    return satisfies(v, range_str)
+end
