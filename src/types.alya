@@ -1,21 +1,31 @@
 # ═══════════════════════════════════════════════════════════════
 # SemVer Types & Low-Level Helpers
+# Part of the Alya Language package ecosystem (https://github.com/alya-lang)
 # ═══════════════════════════════════════════════════════════════
 
-struct Version
-    major
-    minor
-    patch
-    prerelease
-    build
+# Public enumeration for release increment types (exported via pub)
+pub enum ReleaseType
+    Major,
+    Minor,
+    Patch,
+    Prerelease
+end
+
+# Public SemVer Version model (exported via pub)
+pub struct Version
+    major,
+    minor,
+    patch,
+    prerelease,
+    build,
     raw
 end
 
 # ─────────────────────────────────────────────────────────────
-# Internal String & Character Helpers
+# Internal String & Character Helpers (private to package)
 # ─────────────────────────────────────────────────────────────
 
-function _sv_trim(s)
+pub function _sv_trim(s)
     let slen = len(s)
     if slen == 0
         return ""
@@ -23,7 +33,7 @@ function _sv_trim(s)
     let start_idx = 0
     while start_idx < slen
         let ch = char_at(s, start_idx)
-        if ch != " " and ch != "\t" and ch != "\r" and ch != "\n"
+        if ch not in [" ", "\t", "\r", "\n"]
             break
         end
         start_idx += 1
@@ -34,15 +44,15 @@ function _sv_trim(s)
     let end_idx = slen - 1
     while end_idx >= start_idx
         let ch = char_at(s, end_idx)
-        if ch != " " and ch != "\t" and ch != "\r" and ch != "\n"
+        if ch not in [" ", "\t", "\r", "\n"]
             break
         end
         end_idx -= 1
     end
-    return substring(s, start_idx, end_idx - start_idx + 1)
+    return s[start_idx..(end_idx + 1)]
 end
 
-function _sv_is_digit(ch)
+pub function _sv_is_digit(ch)
     if len(ch) != 1
         return 0
     end
@@ -50,7 +60,7 @@ function _sv_is_digit(ch)
     return c >= 48 and c <= 57
 end
 
-function _sv_is_all_digits(s)
+pub function _sv_is_all_digits(s)
     let slen = len(s)
     if slen == 0
         return 0
@@ -65,7 +75,7 @@ function _sv_is_all_digits(s)
     return 1
 end
 
-function _sv_split_char(s, delim)
+pub function _sv_split_char(s, delim)
     let res = []
     let slen = len(s)
     let cur = ""
@@ -84,7 +94,7 @@ function _sv_split_char(s, delim)
     return res
 end
 
-function _sv_index_of(s, needle)
+pub function _sv_index_of(s, needle)
     let slen = len(s)
     let nlen = len(needle)
     if nlen == 0
@@ -95,7 +105,7 @@ function _sv_index_of(s, needle)
     end
     let i = 0
     while i <= slen - nlen
-        if substring(s, i, nlen) == needle
+        if s[i..(i + nlen)] == needle
             return i
         end
         i += 1
@@ -103,11 +113,11 @@ function _sv_index_of(s, needle)
     return -1
 end
 
-function _sv_starts_with(s, prefix)
+pub function _sv_starts_with(s, prefix)
     let plen = len(prefix)
     let slen = len(s)
     if plen > slen
         return 0
     end
-    return substring(s, 0, plen) == prefix
+    return s[0..plen] == prefix
 end
