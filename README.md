@@ -59,8 +59,8 @@ semver = { git = "https://github.com/alya-lang/semver", branch = "main" }
 Or install via Alya CLI:
 
 ```bash
-alyac add semver --git https://github.com/alya-lang/semver --branch main
-alyac install
+alya add semver --git https://github.com/alya-lang/semver --branch main
+alya install
 ```
 
 ---
@@ -147,19 +147,19 @@ main()
 Run the automated test suite:
 
 ```bash
-alyac run tests/test_basic.alya
+alya run tests/test_basic.alya
 ```
 
 Run the performance micro-benchmarks:
 
 ```bash
-alyac run benches/bench_basic.alya
+alya run benches/bench_basic.alya
 ```
 
 Run the runnable usage demo:
 
 ```bash
-alyac run examples/demo.alya
+alya run examples/demo.alya
 ```
 
 ---
@@ -171,13 +171,13 @@ Contributions are welcome! Please follow these steps:
 1. Fork the repository and clone it locally
 2. Install dependencies:
    ```bash
-   alyac install
+   alya install
    ```
 3. Create your feature branch (`git checkout -b feature/my-feature`)
 4. Verify tests and formatting before opening a PR:
    ```bash
-   alyac test
-   alyac fmt . --check
+   alya test
+   alya fmt . --check
    ```
 5. Commit your changes (`git commit -m "feat: add feature"`) and open a Pull Request
 
