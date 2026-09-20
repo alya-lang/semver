@@ -147,7 +147,7 @@ main()
 Run the automated test suite:
 
 ```bash
-alya run tests/test_basic.alya
+alya test
 ```
 
 Run the performance micro-benchmarks:
@@ -160,6 +160,18 @@ Run the runnable usage demo:
 
 ```bash
 alya run examples/demo.alya
+```
+
+Check code formatting:
+
+```bash
+alya fmt . --check
+```
+
+Run static code linter:
+
+```bash
+alya lint . --check
 ```
 
 ---
