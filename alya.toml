@@ -11,3 +11,7 @@ repository = "https://github.com/alya-lang/semver"
 keywords = ["alya", "alya-lang", "semver", "semantic-versioning", "versioning", "parser", "range"]
 
 [dependencies]
+
+# [lint]
+# disabled_rules = []
+# exclude = []
