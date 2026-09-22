@@ -10,6 +10,13 @@ import "./types.alya"
 import "./parser.alya"
 
 # Compares two numeric identifier strings as integers.
+##
+## ### Parameters
+## - `id1`: First identifier string.
+## - `id2`: Second identifier string.
+##
+## ### Returns
+## `-1`, `0`, or `1` for less, equal, or greater ordering.
 pub function _sv_cmp_numeric(id1: string, id2: string) -> int
     let n1 = to_int(id1)
     let n2 = to_int(id2)
@@ -46,6 +53,13 @@ pub function _sv_cmp_identifier(id1: string, id2: string) -> int
 end
 
 # Compares dot-separated prerelease tails identifier by identifier.
+##
+## ### Parameters
+## - `pre1`: First prerelease string.
+## - `pre2`: Second prerelease string.
+##
+## ### Returns
+## `-1`, `0`, or `1` for less, equal, or greater precedence.
 pub function _sv_cmp_prerelease_parts(pre1: string, pre2: string) -> int
     let parts1 = _sv_split_char(pre1, ".")
     let parts2 = _sv_split_char(pre2, ".")

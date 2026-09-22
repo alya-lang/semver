@@ -11,6 +11,14 @@ import "./parser.alya"
 import "./comparator.alya"
 
 # Tests a version against a single explicit comparison operator.
+##
+## ### Parameters
+## - `v`: Target version value.
+## - `op`: Operator string (`=`, `==`, `!=`, `>`, `>=`, `<`, `<=`).
+## - `target_str`: Comparison target version string.
+##
+## ### Returns
+## `1` when satisfied, `0` otherwise.
 pub function _sv_check_simple_constraint(v, op: string, target_str: string) -> int
     let target = parse(target_str)
     let cmp = compare(v, target)
@@ -27,6 +35,13 @@ pub function _sv_check_simple_constraint(v, op: string, target_str: string) -> i
 end
 
 # Tests a version against one comparator token (caret, tilde, operator, wildcard).
+##
+## ### Parameters
+## - `v`: Target version value.
+## - `comp`: Comparator token string.
+##
+## ### Returns
+## `1` when satisfied, `0` otherwise.
 pub function _sv_satisfies_comparator(v, comp: string) -> int
     let c = _sv_trim(comp)
     if len(c) == 0 or c == "*" or c == "x" or c == "X"
@@ -77,6 +92,13 @@ pub function _sv_satisfies_comparator(v, comp: string) -> int
 end
 
 # Tests wildcard-prefix (`1.*`) and exact-match fallbacks.
+##
+## ### Parameters
+## - `v`: Target version value.
+## - `c`: Comparator token string.
+##
+## ### Returns
+## `1` when satisfied, `0` otherwise.
 pub function _sv_satisfies_fallback(v, c: string) -> int
     # Wildcard prefix like 1.* or 1.x
     let dot_parts = _sv_split_char(c, ".")
@@ -101,6 +123,13 @@ pub function _sv_satisfies_fallback(v, c: string) -> int
 end
 
 # Tests a version against a space-separated conjunction of comparators.
+##
+## ### Parameters
+## - `v`: Target version value.
+## - `conj_str`: Conjunction string.
+##
+## ### Returns
+## `1` when every comparator is satisfied, `0` otherwise.
 pub function _sv_satisfies_conjunction(v, conj_str: string) -> int
     let parts = _sv_split_char(conj_str, " ")
     let i = 0
