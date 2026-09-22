@@ -1,31 +1,51 @@
-# ═══════════════════════════════════════════════════════════════
-# SemVer Types & Low-Level Helpers
-# Part of the Alya Language package ecosystem (https://github.com/alya-lang)
-# ═══════════════════════════════════════════════════════════════
+## # semver/types
+##
+## SemVer types and low-level string helpers.
+## Part of the Alya Language package ecosystem (https://github.com/alya-lang).
+##
+## Defines release increment kinds, the `Version` model, and internal
+## string and character inspection utilities shared by the package.
 
-# Public enumeration for release increment types (exported via pub)
+# ───────────────────────────────────────────────────────────────
+# Public Models
+# ───────────────────────────────────────────────────────────────
+
+## Public enumeration for release increment types.
+##
+## Used by `bump` to select the version component being incremented.
 pub enum ReleaseType
-    Major,
-    Minor,
-    Patch,
-    Prerelease
+    Major = 0,
+    Minor = 1,
+    Patch = 2,
+    Prerelease = 3
 end
 
-# Public SemVer Version model (exported via pub)
+## Public SemVer Version model.
+##
+## Holds parsed numeric components alongside prerelease and build metadata.
+##
+## ### Fields
+## - `major`: Major version number (breaking changes).
+## - `minor`: Minor version number (backwards-compatible features).
+## - `patch`: Patch version number (backwards-compatible fixes).
+## - `prerelease`: Prerelease label string (e.g. `"alpha.1"`), or `""`.
+## - `build`: Build metadata string (e.g. `"build.2026"`), or `""`.
+## - `raw`: Normalized version string (e.g. `"1.2.3-alpha.1+build.2026"`).
 pub struct Version
-    major,
-    minor,
-    patch,
-    prerelease,
-    build,
-    raw
+    major: int,
+    minor: int,
+    patch: int,
+    prerelease: string,
+    build: string,
+    raw: string
 end
 
-# ─────────────────────────────────────────────────────────────
+# ───────────────────────────────────────────────────────────────
 # Internal String & Character Helpers (private to package)
-# ─────────────────────────────────────────────────────────────
+# ───────────────────────────────────────────────────────────────
 
-pub function _sv_trim(s)
+## Trims leading and trailing whitespace from a string.
+pub function _sv_trim(s: string) -> string
     let slen = len(s)
     if slen == 0
         return ""
@@ -52,7 +72,8 @@ pub function _sv_trim(s)
     return s[start_idx..(end_idx + 1)]
 end
 
-pub function _sv_is_digit(ch)
+# Checks whether a string is a single ASCII digit character.
+pub function _sv_is_digit(ch: string) -> int
     if len(ch) != 1
         return 0
     end
@@ -60,7 +81,8 @@ pub function _sv_is_digit(ch)
     return c >= 48 and c <= 57
 end
 
-pub function _sv_is_all_digits(s)
+# Checks whether a string consists solely of ASCII digits.
+pub function _sv_is_all_digits(s: string) -> int
     let slen = len(s)
     if slen == 0
         return 0
@@ -75,7 +97,8 @@ pub function _sv_is_all_digits(s)
     return 1
 end
 
-pub function _sv_split_char(s, delim)
+# Splits a string on a single-character delimiter, keeping empty segments.
+pub function _sv_split_char(s: string, delim: string) -> array
     let res = []
     let slen = len(s)
     let cur = ""
@@ -94,7 +117,8 @@ pub function _sv_split_char(s, delim)
     return res
 end
 
-pub function _sv_index_of(s, needle)
+# Returns the first index of a needle substring, or -1 when absent.
+pub function _sv_index_of(s: string, needle: string) -> int
     let slen = len(s)
     let nlen = len(needle)
     if nlen == 0
@@ -113,7 +137,8 @@ pub function _sv_index_of(s, needle)
     return -1
 end
 
-pub function _sv_starts_with(s, prefix)
+# Checks whether a string starts with the given prefix.
+pub function _sv_starts_with(s: string, prefix: string) -> int
     let plen = len(prefix)
     let slen = len(s)
     if plen > slen

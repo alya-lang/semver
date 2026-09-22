@@ -1,9 +1,10 @@
-# ═══════════════════════════════════════════════════════════════
-# Alya SemVer Library (SemVer 2.0.0)
-# Part of the Alya Language package ecosystem (https://github.com/alya-lang)
-#
-# Semantic Versioning 2.0.0 parser, comparator, bumper, and range checker.
-# ═══════════════════════════════════════════════════════════════
+## # semver
+##
+## Semantic Versioning (SemVer 2.0.0) library for Alya.
+## Part of the Alya Language package ecosystem (https://github.com/alya-lang).
+##
+## Provides version parsing, validation, precedence comparison, bumping,
+## and npm-style range satisfaction for dependency resolution.
 
 import "./types.alya"
 import "./parser.alya"
@@ -11,19 +12,56 @@ import "./comparator.alya"
 import "./bumper.alya"
 import "./range.alya"
 
+# ───────────────────────────────────────────────────────────────
 # Public API Facade Functions
+# ───────────────────────────────────────────────────────────────
 
-# Parses a version string into a Version struct
-function parse_version(v_str)
+## Parses a version string into a `Version` struct.
+##
+## ### Parameters
+## - `v_str`: Raw version input string.
+##
+## ### Returns
+## The parsed `Version` instance.
+##
+## ### Examples
+## ```alya
+## let v = parse_version("v1.2.3-rc.1")
+## ```
+pub function parse_version(v_str: string) -> Version
     return parse(v_str)
 end
 
-# Checks if a version satisfies a range expression
-function check_satisfies(v_str, range_str)
+## Checks whether a version satisfies a range expression.
+##
+## ### Parameters
+## - `v_str`: Version string to test.
+## - `range_str`: Range expression string (e.g. `"^1.2.0"`, `">=1.0.0 <2.0.0"`).
+##
+## ### Returns
+## `1` when the range is satisfied, `0` otherwise.
+##
+## ### Examples
+## ```alya
+## say check_satisfies("1.5.0", "^1.0.0") # 1
+## ```
+pub function check_satisfies(v_str: string, range_str: string) -> int
     return satisfies_string(v_str, range_str)
 end
 
-# Compares two version strings (-1, 0, 1)
-function cmp(s1, s2)
+## Compares two version strings, returning precedence order.
+##
+## ### Parameters
+## - `s1`: First version string.
+## - `s2`: Second version string.
+##
+## ### Returns
+## `-1`, `0`, or `1` for less, equal, or greater ordering.
+##
+## ### Examples
+## ```alya
+## say cmp("1.2.3", "1.2.4") # -1
+## ```
+pub function cmp(s1: string, s2: string) -> int
     return compare_strings(s1, s2)
 end

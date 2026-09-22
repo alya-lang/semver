@@ -1,6 +1,8 @@
-# ═══════════════════════════════════════════════════════════════
-# Alya SemVer Example Showcase
-# ═══════════════════════════════════════════════════════════════
+## Showcase of the semver package
+##
+## Demonstrates parsing, precedence comparison, bumping, and range
+## satisfaction for dependency resolution workflows.
+## Part of the Alya Language package ecosystem (https://github.com/alya-lang)
 
 import "std/color"
 import "../src/lib.alya" as semver
@@ -15,13 +17,14 @@ function main()
     say color_yellow("1. Parsing Versions:")
     let v_raw = "v1.5.3-rc.2+build.20260910"
     let v = semver::parse(v_raw)
-    say "  Input Raw:     " + v_raw
-    say "  Normalized:    " + semver::format(v)
-    say "  Major:         " + str(v.major)
-    say "  Minor:         " + str(v.minor)
-    say "  Patch:         " + str(v.patch)
-    say "  Pre-release:   " + v.prerelease
-    say "  Build Meta:    " + v.build
+    let v_fmt = semver::format(v)
+    say "  Input Raw:     {v_raw}"
+    say "  Normalized:    {v_fmt}"
+    say "  Major:         {v.major}"
+    say "  Minor:         {v.minor}"
+    say "  Patch:         {v.patch}"
+    say "  Pre-release:   {v.prerelease}"
+    say "  Build Meta:    {v.build}"
     say ""
 
     # 2. Version Comparison
@@ -31,30 +34,43 @@ function main()
     let v3 = semver::parse("1.0.0")
     let v4 = semver::parse("2.0.0")
 
-    say "  1.0.0-alpha < 1.0.0-beta : " + color_green(str(semver::lt(v1, v2)))
-    say "  1.0.0-beta  < 1.0.0      : " + color_green(str(semver::lt(v2, v3)))
-    say "  1.0.0       < 2.0.0      : " + color_green(str(semver::lt(v3, v4)))
+    let lt1 = color_green(str(semver::lt(v1, v2)))
+    let lt2 = color_green(str(semver::lt(v2, v3)))
+    let lt3 = color_green(str(semver::lt(v3, v4)))
+    say "  1.0.0-alpha < 1.0.0-beta : {lt1}"
+    say "  1.0.0-beta  < 1.0.0      : {lt2}"
+    say "  1.0.0       < 2.0.0      : {lt3}"
     say ""
 
     # 3. Bumping Versions
     say color_yellow("3. Version Bumping:")
     let cur = semver::parse("1.2.3")
-    say "  Current Version:  " + semver::format(cur)
-    say "  Bump Patch:       " + color_green(semver::format(semver::bump_patch(cur)))
-    say "  Bump Minor:       " + color_green(semver::format(semver::bump_minor(cur)))
-    say "  Bump Major:       " + color_green(semver::format(semver::bump_major(cur)))
-    say "  Bump Pre-release: " + color_green(semver::format(semver::bump_prerelease(cur, "beta")))
+    let cur_fmt = semver::format(cur)
+    let bumped_patch = color_green(semver::format(semver::bump_patch(cur)))
+    let bumped_minor = color_green(semver::format(semver::bump_minor(cur)))
+    let bumped_major = color_green(semver::format(semver::bump_major(cur)))
+    let bumped_pre = color_green(semver::format(semver::bump_prerelease(cur, "beta")))
+    say "  Current Version:  {cur_fmt}"
+    say "  Bump Patch:       {bumped_patch}"
+    say "  Bump Minor:       {bumped_minor}"
+    say "  Bump Major:       {bumped_major}"
+    say "  Bump Pre-release: {bumped_pre}"
     say ""
 
     # 4. Dependency Range Satisfaction (like alya.toml or npm / cargo)
     say color_yellow("4. Range Satisfaction Matching:")
     let target = "1.5.2"
-    say "  Target Version: " + target
-    say "  Satisfies '^1.2.0'?                " + color_green(str(semver::satisfies_string(target, "^1.2.0")))
-    say "  Satisfies '~1.5.0'?                " + color_green(str(semver::satisfies_string(target, "~1.5.0")))
-    say "  Satisfies '>=1.0.0 <2.0.0'?        " + color_green(str(semver::satisfies_string(target, ">=1.0.0 <2.0.0")))
-    say "  Satisfies '^0.9.0 || ^1.0.0'?      " + color_green(str(semver::satisfies_string(target, "^0.9.0 || ^1.0.0")))
-    say "  Satisfies '^2.0.0'?                " + color_red(str(semver::satisfies_string(target, "^2.0.0")))
+    let sat_caret = color_green(str(semver::satisfies_string(target, "^1.2.0")))
+    let sat_tilde = color_green(str(semver::satisfies_string(target, "~1.5.0")))
+    let sat_range = color_green(str(semver::satisfies_string(target, ">=1.0.0 <2.0.0")))
+    let sat_or = color_green(str(semver::satisfies_string(target, "^0.9.0 || ^1.0.0")))
+    let sat_no = color_red(str(semver::satisfies_string(target, "^2.0.0")))
+    say "  Target Version: {target}"
+    say "  Satisfies '^1.2.0'?                {sat_caret}"
+    say "  Satisfies '~1.5.0'?                {sat_tilde}"
+    say "  Satisfies '>=1.0.0 <2.0.0'?        {sat_range}"
+    say "  Satisfies '^0.9.0 || ^1.0.0'?      {sat_or}"
+    say "  Satisfies '^2.0.0'?                {sat_no}"
     say ""
     say color_cyan("✓ SemVer showcase completed successfully.")
 end

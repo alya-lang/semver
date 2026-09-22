@@ -1,23 +1,81 @@
-# ═══════════════════════════════════════════════════════════════
-# SemVer Version Bumper & Diff Module
-# ═══════════════════════════════════════════════════════════════
+## # semver/bumper
+##
+## SemVer version bumper and differ.
+## Part of the Alya Language package ecosystem (https://github.com/alya-lang).
+##
+## Increments major, minor, patch, and prerelease components, and reports
+## the highest differing component between two versions.
 
 import "./types.alya"
 
-function bump_major(v)
-    return Version(v.major + 1, 0, 0, "", "", str(v.major + 1) + ".0.0")
+## Bumps the major component, resetting minor and patch to zero.
+##
+## ### Parameters
+## - `v`: Target `Version` instance.
+##
+## ### Returns
+## The bumped `Version` instance.
+##
+## ### Examples
+## ```alya
+## say format(bump_major(parse("1.2.3"))) # "2.0.0"
+## ```
+pub function bump_major(v: Version) -> Version
+    let next_major = v.major + 1
+    return Version { major: next_major, minor: 0, patch: 0, prerelease: "", build: "", raw: "{next_major}.0.0" }
 end
 
-function bump_minor(v)
-    return Version(v.major, v.minor + 1, 0, "", "", str(v.major) + "." + str(v.minor + 1) + ".0")
+## Bumps the minor component, resetting patch to zero.
+##
+## ### Parameters
+## - `v`: Target `Version` instance.
+##
+## ### Returns
+## The bumped `Version` instance.
+##
+## ### Examples
+## ```alya
+## say format(bump_minor(parse("1.2.3"))) # "1.3.0"
+## ```
+pub function bump_minor(v: Version) -> Version
+    let next_minor = v.minor + 1
+    return Version { major: v.major, minor: next_minor, patch: 0, prerelease: "", build: "", raw: "{v.major}.{next_minor}.0" }
 end
 
-function bump_patch(v)
-    return Version(v.major, v.minor, v.patch + 1, "", "", str(v.major) + "." + str(v.minor) + "." + str(v.patch + 1))
+## Bumps the patch component.
+##
+## ### Parameters
+## - `v`: Target `Version` instance.
+##
+## ### Returns
+## The bumped `Version` instance.
+##
+## ### Examples
+## ```alya
+## say format(bump_patch(parse("1.2.3"))) # "1.2.4"
+## ```
+pub function bump_patch(v: Version) -> Version
+    let next_patch = v.patch + 1
+    return Version { major: v.major, minor: v.minor, patch: next_patch, prerelease: "", build: "", raw: "{v.major}.{v.minor}.{next_patch}" }
 end
 
-function bump_prerelease(v, tag = "alpha")
-    let pre = tag + ".1"
+## Bumps the prerelease label, incrementing any trailing numeric counter.
+##
+## Starts a fresh `{tag}.1` label when the version has no prerelease yet.
+##
+## ### Parameters
+## - `v`: Target `Version` instance.
+## - `tag`: Prerelease tag prefix. Defaults to `"alpha"`.
+##
+## ### Returns
+## The bumped `Version` instance.
+##
+## ### Examples
+## ```alya
+## say format(bump_prerelease(parse("1.2.3"), "beta")) # "1.2.3-beta.1"
+## ```
+pub function bump_prerelease(v: Version, tag: string = "alpha") -> Version
+    let pre = "{tag}.1"
     if len(v.prerelease) > 0
         let parts = _sv_split_char(v.prerelease, ".")
         let plen = arr_len(parts)
@@ -31,16 +89,24 @@ function bump_prerelease(v, tag = "alpha")
                     new_pre += "." + parts[pi]
                     pi += 1
                 end
-                new_pre += "." + str(next_num)
+                new_pre += ".{next_num}"
                 pre = new_pre
             end
         end
     end
-    let raw_val = str(v.major) + "." + str(v.minor) + "." + str(v.patch) + "-" + pre
-    return Version(v.major, v.minor, v.patch, pre, "", raw_val)
+    let raw_val = "{v.major}.{v.minor}.{v.patch}-{pre}"
+    return Version { major: v.major, minor: v.minor, patch: v.patch, prerelease: pre, build: "", raw: raw_val }
 end
 
-function bump(v, release_type)
+## Bumps a version by release-type name, returning it unchanged when unknown.
+##
+## ### Parameters
+## - `v`: Target `Version` instance.
+## - `release_type`: One of `"major"`, `"minor"`, `"patch"`, or `"prerelease"`.
+##
+## ### Returns
+## The bumped `Version` instance, or the original when unknown.
+pub function bump(v: Version, release_type: string) -> Version
     when release_type
         is "major" then return bump_major(v)
         is "minor" then return bump_minor(v)
@@ -50,16 +116,25 @@ function bump(v, release_type)
     end
 end
 
-function diff(v1, v2)
-    if v1.major != v2.major
-        return "major"
-    elif v1.minor != v2.minor
-        return "minor"
-    elif v1.patch != v2.patch
-        return "patch"
-    elif v1.prerelease != v2.prerelease
-        return "prerelease"
-    else
-        return ""
+## Reports the highest differing component between two versions.
+##
+## ### Parameters
+## - `v1`: First `Version` instance.
+## - `v2`: Second `Version` instance.
+##
+## ### Returns
+## `"major"`, `"minor"`, `"patch"`, `"prerelease"`, or `""` when identical.
+##
+## ### Examples
+## ```alya
+## say diff(parse("1.2.3"), parse("2.0.0")) # "major"
+## ```
+pub function diff(v1: Version, v2: Version) -> string
+    return when
+        v1.major != v2.major         => "major"
+        v1.minor != v2.minor         => "minor"
+        v1.patch != v2.patch         => "patch"
+        v1.prerelease != v2.prerelease => "prerelease"
+        else                         => ""
     end
 end

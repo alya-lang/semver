@@ -1,12 +1,17 @@
-# ═══════════════════════════════════════════════════════════════
-# SemVer Range Satisfaction Module (Caret, Tilde, Wildcard, Logical)
-# ═══════════════════════════════════════════════════════════════
+## # semver/range
+##
+## SemVer range satisfaction (caret, tilde, wildcard, logical).
+## Part of the Alya Language package ecosystem (https://github.com/alya-lang).
+##
+## Evaluates npm-style range expressions (`^1.2.3`, `~1.2.0`, `>=1.0.0 <2.0.0`,
+## `1.*`, `^1.0.0 || ^2.0.0`) against parsed versions.
 
 import "./types.alya"
 import "./parser.alya"
 import "./comparator.alya"
 
-function _sv_check_simple_constraint(v, op, target_str)
+# Tests a version against a single explicit comparison operator.
+pub function _sv_check_simple_constraint(v, op: string, target_str: string) -> int
     let target = parse(target_str)
     let cmp = compare(v, target)
     when op
@@ -21,7 +26,8 @@ function _sv_check_simple_constraint(v, op, target_str)
     end
 end
 
-function _sv_satisfies_comparator(v, comp)
+# Tests a version against one comparator token (caret, tilde, operator, wildcard).
+pub function _sv_satisfies_comparator(v, comp: string) -> int
     let c = _sv_trim(comp)
     if len(c) == 0 or c == "*" or c == "x" or c == "X"
         return 1
@@ -35,13 +41,13 @@ function _sv_satisfies_comparator(v, comp)
             return 0
         end
         if base.major > 0
-            let upper = Version(base.major + 1, 0, 0, "0", "", "")
+            let upper = Version { major: base.major + 1, minor: 0, patch: 0, prerelease: "0", build: "", raw: "" }
             return compare(v, upper) < 0
         elif base.minor > 0
-            let upper = Version(0, base.minor + 1, 0, "0", "", "")
+            let upper = Version { major: 0, minor: base.minor + 1, patch: 0, prerelease: "0", build: "", raw: "" }
             return compare(v, upper) < 0
         else
-            let upper = Version(0, 0, base.patch + 1, "0", "", "")
+            let upper = Version { major: 0, minor: 0, patch: base.patch + 1, prerelease: "0", build: "", raw: "" }
             return compare(v, upper) < 0
         end
     end
@@ -53,27 +59,25 @@ function _sv_satisfies_comparator(v, comp)
         if compare(v, base) < 0
             return 0
         end
-        let upper = Version(base.major, base.minor + 1, 0, "0", "", "")
+        let upper = Version { major: base.major, minor: base.minor + 1, patch: 0, prerelease: "0", build: "", raw: "" }
         return compare(v, upper) < 0
     end
 
-    # Explicit operators
-    if _sv_starts_with(c, ">=")
-        return _sv_check_simple_constraint(v, ">=", _sv_trim(substring(c, 2, len(c) - 2)))
-    elif _sv_starts_with(c, "<=")
-        return _sv_check_simple_constraint(v, "<=", _sv_trim(substring(c, 2, len(c) - 2)))
-    elif _sv_starts_with(c, "!=")
-        return _sv_check_simple_constraint(v, "!=", _sv_trim(substring(c, 2, len(c) - 2)))
-    elif _sv_starts_with(c, "==")
-        return _sv_check_simple_constraint(v, "==", _sv_trim(substring(c, 2, len(c) - 2)))
-    elif _sv_starts_with(c, ">")
-        return _sv_check_simple_constraint(v, ">", _sv_trim(substring(c, 1, len(c) - 1)))
-    elif _sv_starts_with(c, "<")
-        return _sv_check_simple_constraint(v, "<", _sv_trim(substring(c, 1, len(c) - 1)))
-    elif _sv_starts_with(c, "=")
-        return _sv_check_simple_constraint(v, "=", _sv_trim(substring(c, 1, len(c) - 1)))
+    # Explicit operators (longest prefixes first)
+    return when
+        _sv_starts_with(c, ">=") => _sv_check_simple_constraint(v, ">=", _sv_trim(substring(c, 2, len(c) - 2)))
+        _sv_starts_with(c, "<=") => _sv_check_simple_constraint(v, "<=", _sv_trim(substring(c, 2, len(c) - 2)))
+        _sv_starts_with(c, "!=") => _sv_check_simple_constraint(v, "!=", _sv_trim(substring(c, 2, len(c) - 2)))
+        _sv_starts_with(c, "==") => _sv_check_simple_constraint(v, "==", _sv_trim(substring(c, 2, len(c) - 2)))
+        _sv_starts_with(c, ">")  => _sv_check_simple_constraint(v, ">", _sv_trim(substring(c, 1, len(c) - 1)))
+        _sv_starts_with(c, "<")  => _sv_check_simple_constraint(v, "<", _sv_trim(substring(c, 1, len(c) - 1)))
+        _sv_starts_with(c, "=")  => _sv_check_simple_constraint(v, "=", _sv_trim(substring(c, 1, len(c) - 1)))
+        else                     => _sv_satisfies_fallback(v, c)
     end
+end
 
+# Tests wildcard-prefix (`1.*`) and exact-match fallbacks.
+pub function _sv_satisfies_fallback(v, c: string) -> int
     # Wildcard prefix like 1.* or 1.x
     let dot_parts = _sv_split_char(c, ".")
     let dlen = arr_len(dot_parts)
@@ -96,7 +100,8 @@ function _sv_satisfies_comparator(v, comp)
     return _sv_check_simple_constraint(v, "=", c)
 end
 
-function _sv_satisfies_conjunction(v, conj_str)
+# Tests a version against a space-separated conjunction of comparators.
+pub function _sv_satisfies_conjunction(v, conj_str: string) -> int
     let parts = _sv_split_char(conj_str, " ")
     let i = 0
     while i < arr_len(parts)
@@ -111,7 +116,20 @@ function _sv_satisfies_conjunction(v, conj_str)
     return 1
 end
 
-function satisfies(v_in, range_str)
+## Tests whether a version satisfies a full range expression with `||` branches.
+##
+## ### Parameters
+## - `v_in`: Target version (`Version` instance or version string).
+## - `range_str`: Range expression string.
+##
+## ### Returns
+## `1` when any OR branch is satisfied, `0` otherwise.
+##
+## ### Examples
+## ```alya
+## say satisfies(parse("1.5.0"), "^1.0.0 || ^2.0.0") # 1
+## ```
+pub function satisfies(v_in, range_str: string) -> int
     let v = v_in
     let r = _sv_trim(range_str)
     if len(r) == 0 or r == "*"
@@ -149,7 +167,20 @@ function satisfies(v_in, range_str)
     return 0
 end
 
-function satisfies_string(v_str, range_str)
+## Tests whether a version string satisfies a range expression.
+##
+## ### Parameters
+## - `v_str`: Version string to test.
+## - `range_str`: Range expression string.
+##
+## ### Returns
+## `1` when the range is satisfied, `0` otherwise.
+##
+## ### Examples
+## ```alya
+## say satisfies_string("1.5.0", ">=1.0.0 <2.0.0") # 1
+## ```
+pub function satisfies_string(v_str: string, range_str: string) -> int
     let v = parse(v_str)
     return satisfies(v, range_str)
 end

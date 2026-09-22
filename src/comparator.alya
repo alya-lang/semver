@@ -1,58 +1,59 @@
-# ═══════════════════════════════════════════════════════════════
-# SemVer Comparison & Precedence Module (Section 11)
-# ═══════════════════════════════════════════════════════════════
+## # semver/comparator
+##
+## SemVer comparison and precedence (Section 11).
+## Part of the Alya Language package ecosystem (https://github.com/alya-lang).
+##
+## Implements numeric-aware identifier ordering, prerelease precedence, and
+## the `compare`/`eq`/`lt` family of ordering predicates.
 
 import "./types.alya"
 import "./parser.alya"
 
-function _sv_cmp_identifier(id1, id2)
-    let is_num1 = _sv_is_all_digits(id1)
-    let is_num2 = _sv_is_all_digits(id2)
-
-    if is_num1 == 1 and is_num2 == 1
-        let n1 = to_int(id1)
-        let n2 = to_int(id2)
-        if n1 < n2
-            return -1
-        elif n1 > n2
-            return 1
-        else
-            return 0
-        end
-    elif is_num1 == 1 and is_num2 == 0
-        # Numeric identifiers have lower precedence than non-numeric identifiers
-        return -1
-    elif is_num1 == 0 and is_num2 == 1
-        return 1
-    else
-        # Lexical comparison
-        if id1 < id2
-            return -1
-        elif id1 > id2
-            return 1
-        else
-            return 0
-        end
+# Compares two numeric identifier strings as integers.
+pub function _sv_cmp_numeric(id1: string, id2: string) -> int
+    let n1 = to_int(id1)
+    let n2 = to_int(id2)
+    return when
+        n1 < n2 => -1
+        n1 > n2 => 1
+        else    => 0
     end
 end
 
-function _sv_cmp_prerelease(pre1, pre2)
-    if len(pre1) == 0 and len(pre2) == 0
-        return 0
-    elif len(pre1) == 0 and len(pre2) > 0
-        # Normal version has higher precedence than pre-release version
-        return 1
-    elif len(pre1) > 0 and len(pre2) == 0
-        return -1
-    end
+## Compares two prerelease identifiers per SemVer precedence rules.
+##
+## Numeric identifiers order below alphanumeric ones; numeric parts compare
+## numerically, the rest lexically.
+##
+## ### Parameters
+## - `id1`: First identifier string.
+## - `id2`: Second identifier string.
+##
+## ### Returns
+## `-1`, `0`, or `1` for less, equal, or greater ordering.
+pub function _sv_cmp_identifier(id1: string, id2: string) -> int
+    let is_num1 = _sv_is_all_digits(id1)
+    let is_num2 = _sv_is_all_digits(id2)
 
+    return when
+        is_num1 == 1 and is_num2 == 1 => _sv_cmp_numeric(id1, id2)
+        is_num1 == 1                  => -1
+        is_num2 == 1                  => 1
+        id1 < id2                     => -1
+        id1 > id2                     => 1
+        else                          => 0
+    end
+end
+
+# Compares dot-separated prerelease tails identifier by identifier.
+pub function _sv_cmp_prerelease_parts(pre1: string, pre2: string) -> int
     let parts1 = _sv_split_char(pre1, ".")
     let parts2 = _sv_split_char(pre2, ".")
     let len1 = arr_len(parts1)
     let len2 = arr_len(parts2)
-    let min_len = len1
-    if len2 < min_len
-        min_len = len2
+    let min_len = when
+        len2 < len1 => len2
+        else        => len1
     end
 
     let i = 0
@@ -64,19 +65,49 @@ function _sv_cmp_prerelease(pre1, pre2)
         i += 1
     end
 
-    if len1 < len2
-        return -1
-    elif len1 > len2
-        return 1
-    else
-        return 0
+    return when
+        len1 < len2 => -1
+        len1 > len2 => 1
+        else        => 0
     end
 end
 
-function compare(v1_in, v2_in)
-    let v1 = v1_in
-    let v2 = v2_in
+## Compares two prerelease strings; release versions outrank prereleases.
+##
+## ### Parameters
+## - `pre1`: First prerelease string (empty means a normal release).
+## - `pre2`: Second prerelease string (empty means a normal release).
+##
+## ### Returns
+## `-1`, `0`, or `1` for less, equal, or greater precedence.
+pub function _sv_cmp_prerelease(pre1: string, pre2: string) -> int
+    if len(pre1) == 0 or len(pre2) == 0
+        return when
+            len(pre1) == len(pre2) => 0
+            len(pre1) == 0         => 1
+            else                   => -1
+        end
+    end
 
+    return _sv_cmp_prerelease_parts(pre1, pre2)
+end
+
+## Compares two versions by major, minor, patch, then prerelease precedence.
+##
+## Build metadata is ignored per the SemVer specification.
+##
+## ### Parameters
+## - `v1`: First `Version` instance.
+## - `v2`: Second `Version` instance.
+##
+## ### Returns
+## `-1`, `0`, or `1` for less, equal, or greater ordering.
+##
+## ### Examples
+## ```alya
+## say compare(parse("1.0.0-alpha"), parse("1.0.0")) # -1
+## ```
+pub function compare(v1: Version, v2: Version) -> int
     # Compare Major
     if v1.major < v2.major
         return -1
@@ -102,44 +133,121 @@ function compare(v1_in, v2_in)
     return _sv_cmp_prerelease(v1.prerelease, v2.prerelease)
 end
 
-function compare_strings(s1, s2)
+## Compares two version strings by parsing them first.
+##
+## ### Parameters
+## - `s1`: First version string.
+## - `s2`: Second version string.
+##
+## ### Returns
+## `-1`, `0`, or `1` for less, equal, or greater ordering.
+##
+## ### Examples
+## ```alya
+## say compare_strings("1.2.3", "1.2.4") # -1
+## ```
+pub function compare_strings(s1: string, s2: string) -> int
     let v1 = parse(s1)
     let v2 = parse(s2)
     return compare(v1, v2)
 end
 
-function eq(v1, v2)
+## Returns 1 when two versions have equal precedence, 0 otherwise.
+##
+## ### Parameters
+## - `v1`: First `Version` instance.
+## - `v2`: Second `Version` instance.
+##
+## ### Returns
+## `1` on equality, `0` otherwise.
+pub function eq(v1: Version, v2: Version)
     return compare(v1, v2) == 0
 end
 
-function neq(v1, v2)
+## Returns 1 when two versions differ in precedence, 0 otherwise.
+##
+## ### Parameters
+## - `v1`: First `Version` instance.
+## - `v2`: Second `Version` instance.
+##
+## ### Returns
+## `1` on inequality, `0` otherwise.
+pub function neq(v1: Version, v2: Version)
     return compare(v1, v2) != 0
 end
 
-function gt(v1, v2)
+## Returns 1 when `v1` outranks `v2`, 0 otherwise.
+##
+## ### Parameters
+## - `v1`: First `Version` instance.
+## - `v2`: Second `Version` instance.
+##
+## ### Returns
+## `1` when `v1` is greater, `0` otherwise.
+pub function gt(v1: Version, v2: Version)
     return compare(v1, v2) > 0
 end
 
-function gte(v1, v2)
+## Returns 1 when `v1` outranks or equals `v2`, 0 otherwise.
+##
+## ### Parameters
+## - `v1`: First `Version` instance.
+## - `v2`: Second `Version` instance.
+##
+## ### Returns
+## `1` when `v1` is greater or equal, `0` otherwise.
+pub function gte(v1: Version, v2: Version)
     return compare(v1, v2) >= 0
 end
 
-function lt(v1, v2)
+## Returns 1 when `v1` is outranked by `v2`, 0 otherwise.
+##
+## ### Parameters
+## - `v1`: First `Version` instance.
+## - `v2`: Second `Version` instance.
+##
+## ### Returns
+## `1` when `v1` is lesser, `0` otherwise.
+pub function lt(v1: Version, v2: Version)
     return compare(v1, v2) < 0
 end
 
-function lte(v1, v2)
+## Returns 1 when `v1` is outranked by or equals `v2`, 0 otherwise.
+##
+## ### Parameters
+## - `v1`: First `Version` instance.
+## - `v2`: Second `Version` instance.
+##
+## ### Returns
+## `1` when `v1` is lesser or equal, `0` otherwise.
+pub function lte(v1: Version, v2: Version)
     return compare(v1, v2) <= 0
 end
 
-function max(v1, v2)
+## Returns the higher-precedence of two versions.
+##
+## ### Parameters
+## - `v1`: First `Version` instance.
+## - `v2`: Second `Version` instance.
+##
+## ### Returns
+## The greater (or equal) `Version` instance.
+pub function max(v1: Version, v2: Version) -> Version
     if compare(v1, v2) >= 0
         return v1
     end
     return v2
 end
 
-function min(v1, v2)
+## Returns the lower-precedence of two versions.
+##
+## ### Parameters
+## - `v1`: First `Version` instance.
+## - `v2`: Second `Version` instance.
+##
+## ### Returns
+## The lesser (or equal) `Version` instance.
+pub function min(v1: Version, v2: Version) -> Version
     if compare(v1, v2) <= 0
         return v1
     end

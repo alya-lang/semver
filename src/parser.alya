@@ -1,10 +1,26 @@
-# ═══════════════════════════════════════════════════════════════
-# SemVer Parser & Formatter Module
-# ═══════════════════════════════════════════════════════════════
+## # semver/parser
+##
+## SemVer parser and formatter.
+## Part of the Alya Language package ecosystem (https://github.com/alya-lang).
+##
+## Parses version strings (`v1.2.3-rc.1+build`), validates them, and
+## formats `Version` models back into normalized strings.
 
 import "./types.alya"
 
-function clean(v_str)
+## Strips whitespace, `=`, and `v`/`V` prefixes from a version string.
+##
+## ### Parameters
+## - `v_str`: Raw version input string.
+##
+## ### Returns
+## The cleaned version string ready for parsing.
+##
+## ### Examples
+## ```alya
+## say clean("  v1.2.3  ") # "1.2.3"
+## ```
+pub function clean(v_str: string) -> string
     let s = _sv_trim(v_str)
     if _sv_starts_with(s, "=")
         s = _sv_trim(substring(s, 1, len(s) - 1))
@@ -15,10 +31,25 @@ function clean(v_str)
     return s
 end
 
-function parse(v_str)
+## Parses a version string into a `Version` struct.
+##
+## Tolerates missing components (`"3.8"` becomes `3.8.0`) and non-numeric
+## parts (treated as `0`).
+##
+## ### Parameters
+## - `v_str`: Raw version input string.
+##
+## ### Returns
+## The parsed `Version` instance.
+##
+## ### Examples
+## ```alya
+## let v = parse("v2.4.6-alpha.1+build.2026")
+## ```
+pub function parse(v_str: string) -> Version
     let s = clean(v_str)
     if len(s) == 0
-        return Version(0, 0, 0, "", "", "")
+        return Version { major: 0, minor: 0, patch: 0, prerelease: "", build: "", raw: "" }
     end
 
     let build_meta = ""
@@ -56,44 +87,94 @@ function parse(v_str)
         end
     end
 
-    let raw_val = str(maj) + "." + str(min) + "." + str(pat)
+    let raw_val = "{maj}.{min}.{pat}"
     if len(prerelease) > 0
-        raw_val += "-" + prerelease
+        raw_val += "-{prerelease}"
     end
     if len(build_meta) > 0
-        raw_val += "+" + build_meta
+        raw_val += "+{build_meta}"
     end
 
-    return Version(maj, min, pat, prerelease, build_meta, raw_val)
+    return Version { major: maj, minor: min, patch: pat, prerelease: prerelease, build: build_meta, raw: raw_val }
 end
 
-function create(major, minor, patch, prerelease = "", build = "")
-    let raw_val = str(major) + "." + str(minor) + "." + str(patch)
+## Creates a `Version` from explicit components.
+##
+## ### Parameters
+## - `major`: Major version number.
+## - `minor`: Minor version number.
+## - `patch`: Patch version number.
+## - `prerelease`: Prerelease label. Defaults to `""`.
+## - `build`: Build metadata. Defaults to `""`.
+##
+## ### Returns
+## The constructed `Version` instance.
+##
+## ### Examples
+## ```alya
+## let v = create(1, 2, 3, "alpha.1", "build.42")
+## ```
+pub function create(major: int, minor: int, patch: int, prerelease: string = "", build: string = "") -> Version
+    let raw_val = "{major}.{minor}.{patch}"
     if len(prerelease) > 0
-        raw_val += "-" + prerelease
+        raw_val += "-{prerelease}"
     end
     if len(build) > 0
-        raw_val += "+" + build
+        raw_val += "+{build}"
     end
-    return Version(major, minor, patch, prerelease, build, raw_val)
+    return Version { major: major, minor: minor, patch: patch, prerelease: prerelease, build: build, raw: raw_val }
 end
 
-function to_string(v)
+## Formats a `Version` back into its normalized string form.
+##
+## Alias for `format`.
+##
+## ### Parameters
+## - `v`: Target `Version` instance.
+##
+## ### Returns
+## The normalized version string.
+pub function to_string(v: Version) -> string
     return format(v)
 end
 
-function format(v)
-    let s = str(v.major) + "." + str(v.minor) + "." + str(v.patch)
+## Formats a `Version` back into its normalized string form.
+##
+## ### Parameters
+## - `v`: Target `Version` instance.
+##
+## ### Returns
+## The normalized version string (e.g. `"2.4.6-alpha.1+build.2026"`).
+##
+## ### Examples
+## ```alya
+## say format(parse("v1.2.3")) # "1.2.3"
+## ```
+pub function format(v: Version) -> string
+    let s = "{v.major}.{v.minor}.{v.patch}"
     if len(v.prerelease) > 0
-        s += "-" + v.prerelease
+        s += "-{v.prerelease}"
     end
     if len(v.build) > 0
-        s += "+" + v.build
+        s += "+{v.build}"
     end
     return s
 end
 
-function is_valid(v_str)
+## Checks whether a version string is structurally valid.
+##
+## ### Parameters
+## - `v_str`: Raw version input string.
+##
+## ### Returns
+## `1` when the string has 1-3 numeric dot-separated components, `0` otherwise.
+##
+## ### Examples
+## ```alya
+## say is_valid("1.0.0-rc.1") # 1
+## say is_valid("a.b.c") # 0
+## ```
+pub function is_valid(v_str: string) -> int
     let s = clean(v_str)
     if len(s) == 0
         return 0
