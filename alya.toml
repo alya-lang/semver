@@ -8,7 +8,7 @@ authors = ["Alya Language Contributors <https://github.com/alya-lang>"]
 license = "MIT"
 homepage = "https://github.com/alya-lang/alya"
 repository = "https://github.com/alya-lang/semver"
-keywords = ["alya", "alya-lang", "semver", "semantic-versioning", "versioning", "parser", "range"]
+keywords = ["alya", "alya-lang", "package", "semver", "semantic-versioning", "versioning", "parser", "range"]
 
 [dependencies]
 
