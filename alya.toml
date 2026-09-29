@@ -12,6 +12,12 @@ keywords = ["alya", "alya-lang", "package", "semver", "semantic-versioning", "ve
 
 [dependencies]
 
+[features]
+default = ["compare", "bump", "range"]
+compare = []
+bump = []
+range = []
+
 # [lint]
 # disabled_rules = []
 # exclude = []

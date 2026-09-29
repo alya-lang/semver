@@ -42,6 +42,16 @@ function main()
     say "  1.0.0       < 2.0.0      : {lt3}"
     say ""
 
+    @cfg(feature = "bump")
+    demo_bump()
+    @cfg(feature = "range")
+    demo_ranges()
+
+    say color_cyan("✓ SemVer showcase completed successfully.")
+end
+
+@cfg(feature = "bump")
+function demo_bump()
     # 3. Bumping Versions
     say color_yellow("3. Version Bumping:")
     let cur = semver::parse("1.2.3")
@@ -56,7 +66,10 @@ function main()
     say "  Bump Major:       {bumped_major}"
     say "  Bump Pre-release: {bumped_pre}"
     say ""
+end
 
+@cfg(feature = "range")
+function demo_ranges()
     # 4. Dependency Range Satisfaction (like alya.toml or npm / cargo)
     say color_yellow("4. Range Satisfaction Matching:")
     let target = "1.5.2"
@@ -72,7 +85,5 @@ function main()
     say "  Satisfies '^0.9.0 || ^1.0.0'?      {sat_or}"
     say "  Satisfies '^2.0.0'?                {sat_no}"
     say ""
-    say color_cyan("✓ SemVer showcase completed successfully.")
 end
-
 main()

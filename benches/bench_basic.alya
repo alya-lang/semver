@@ -16,6 +16,19 @@ function main()
     end
     bench_stop(runner, "semver::parse (complex)")
 
+    @cfg(feature = "compare")
+    bench_compare(runner)
+
+    @cfg(feature = "range")
+    bench_satisfies(runner)
+
+    @cfg(feature = "bump")
+    bench_bump(runner)
+    bench_summary(runner)
+end
+
+@cfg(feature = "compare")
+function bench_compare(runner)
     # 2. Precedence Comparison benchmark
     let v1 = semver::parse("1.2.3")
     let v2 = semver::parse("1.2.4")
@@ -26,7 +39,10 @@ function main()
         j += 1
     end
     bench_stop(runner, "semver::compare (precedence)")
+end
 
+@cfg(feature = "range")
+function bench_satisfies(runner)
     # 3. Range satisfaction benchmark (^caret range)
     bench_start(runner, 50000)
     let k = 0
@@ -35,7 +51,10 @@ function main()
         k += 1
     end
     bench_stop(runner, "semver::satisfies (^1.2.0)")
+end
 
+@cfg(feature = "bump")
+function bench_bump(runner)
     # 4. Version bump benchmark
     let v = semver::parse("1.2.3")
     bench_start(runner, 50000)
@@ -45,8 +64,5 @@ function main()
         m += 1
     end
     bench_stop(runner, "semver::bump_minor")
-
-    bench_summary(runner)
 end
-
 main()

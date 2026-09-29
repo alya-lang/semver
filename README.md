@@ -63,6 +63,26 @@ alya add semver --git https://github.com/alya-lang/semver --branch main
 alya install
 ```
 
+### Package Features
+
+| Feature | Default | Description |
+|:---|:---:|:---|
+| `compare` | ✅ | Precedence comparison (`compare`, `cmp`, `eq`/`gt`/`lt`, ...). |
+| `bump` | ✅ | Version bumping (`bump_major`/`minor`/`patch`/`prerelease`, `diff`). |
+| `range` | ✅ | Range satisfaction (`satisfies`, `check_satisfies`). |
+
+Parsing/formatting (`parse`, `format`, `is_valid`) always work.
+
+```bash
+# Full build (default)
+alya install
+alya test
+
+# Slim build (parse only)
+alya install --no-default-features
+alya test --no-default-features
+```
+
 ---
 
 ## 🚀 Quick Start

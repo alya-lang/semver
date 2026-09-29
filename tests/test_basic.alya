@@ -29,6 +29,7 @@ function test_validation(r)
     runner_assert_eq(r, semver::is_valid(""), 0, "invalid empty")
 end
 
+@cfg(feature = "compare")
 function test_comparison(r)
     let v1 = semver::parse("1.0.0")
     let v2 = semver::parse("2.0.0")
@@ -65,6 +66,7 @@ function test_comparison(r)
     runner_assert_eq(r, semver::eq(v_b1, v_b2), 1, "build metadata ignored in comparison")
 end
 
+@cfg(feature = "bump")
 function test_bumping_and_diff(r)
     let v = semver::parse("1.2.3")
 
@@ -88,6 +90,7 @@ function test_bumping_and_diff(r)
     runner_assert_str_eq(r, semver::diff(v, v_pat), "patch", "diff patch")
 end
 
+@cfg(feature = "range")
 function test_range_satisfaction(r)
     # Exact & comparators
     runner_assert_eq(r, semver::satisfies_string("1.2.3", "1.2.3"), 1, "satisfies exact")
@@ -126,8 +129,11 @@ function main()
 
     test_parsing_and_formatting(r)
     test_validation(r)
+    @cfg(feature = "compare")
     test_comparison(r)
+    @cfg(feature = "bump")
     test_bumping_and_diff(r)
+    @cfg(feature = "range")
     test_range_satisfaction(r)
 
     let failed = runner_summary(r)

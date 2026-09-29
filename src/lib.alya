@@ -8,8 +8,11 @@
 
 import "./types.alya"
 import "./parser.alya"
+@cfg(feature = "compare")
 import "./comparator.alya"
+@cfg(feature = "bump")
 import "./bumper.alya"
+@cfg(feature = "range")
 import "./range.alya"
 
 # ───────────────────────────────────────────────────────────────
@@ -34,6 +37,8 @@ end
 
 ## Checks whether a version satisfies a range expression.
 ##
+## Requires the `range` feature (default-on).
+##
 ## ### Parameters
 ## - `v_str`: Version string to test.
 ## - `range_str`: Range expression string (e.g. `"^1.2.0"`, `">=1.0.0 <2.0.0"`).
@@ -45,11 +50,14 @@ end
 ## ```alya
 ## say check_satisfies("1.5.0", "^1.0.0") # 1
 ## ```
+@cfg(feature = "range")
 pub function check_satisfies(v_str: string, range_str: string) -> int
     return satisfies_string(v_str, range_str)
 end
 
 ## Compares two version strings, returning precedence order.
+##
+## Requires the `compare` feature (default-on).
 ##
 ## ### Parameters
 ## - `s1`: First version string.
@@ -62,6 +70,7 @@ end
 ## ```alya
 ## say cmp("1.2.3", "1.2.4") # -1
 ## ```
+@cfg(feature = "compare")
 pub function cmp(s1: string, s2: string) -> int
     return compare_strings(s1, s2)
 end
