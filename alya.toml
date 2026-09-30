@@ -1,6 +1,6 @@
 [package]
 name = "semver"
-version = "0.2.0"
+version = "0.1.0"
 alya-version = "0.0.19"
 entry = "src/lib.alya"
 description = "Semantic Versioning (SemVer 2.0.0) parser, comparator, and range satisfaction library for Alya"
@@ -11,12 +11,6 @@ repository = "https://github.com/alya-lang/semver"
 keywords = ["alya", "alya-lang", "package", "semver", "semantic-versioning", "versioning", "parser", "range"]
 
 [dependencies]
-
-[features]
-default = ["compare", "bump", "range"]
-compare = []
-bump = []
-range = []
 
 # [lint]
 # disabled_rules = []
@@ -30,3 +24,9 @@ range = []
 
 # [bench]
 # exclude = []
+
+[features]
+default = ["compare", "bump", "range"]
+compare = []
+bump = []
+range = []
