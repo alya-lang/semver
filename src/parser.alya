@@ -72,17 +72,17 @@ pub function parse(v_str: string) -> Version
     let pat = 0
 
     if arr_len(parts) >= 1
-        if _sv_is_all_digits(parts[0]) == 1
+        if _sv_is_all_digits(parts[0]) == true
             maj = to_int(parts[0])
         end
     end
     if arr_len(parts) >= 2
-        if _sv_is_all_digits(parts[1]) == 1
+        if _sv_is_all_digits(parts[1]) == true
             min = to_int(parts[1])
         end
     end
     if arr_len(parts) >= 3
-        if _sv_is_all_digits(parts[2]) == 1
+        if _sv_is_all_digits(parts[2]) == true
             pat = to_int(parts[2])
         end
     end
@@ -177,7 +177,7 @@ end
 pub function is_valid(v_str: string) -> int
     let s = clean(v_str)
     if len(s) == 0
-        return 0
+        return false
     end
 
     let plus_idx = _sv_index_of(s, "+")
@@ -192,15 +192,15 @@ pub function is_valid(v_str: string) -> int
 
     let parts = _sv_split_char(s, ".")
     if arr_len(parts) < 1 or arr_len(parts) > 3
-        return 0
+        return false
     end
 
     let i = 0
     while i < arr_len(parts)
-        if _sv_is_all_digits(parts[i]) == 0
-            return 0
+        if _sv_is_all_digits(parts[i]) == false
+            return false
         end
         i += 1
     end
-    return 1
+    return true
 end

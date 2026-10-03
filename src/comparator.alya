@@ -43,9 +43,9 @@ pub function _sv_cmp_identifier(id1: string, id2: string) -> int
     let is_num2 = _sv_is_all_digits(id2)
 
     return when
-        is_num1 == 1 and is_num2 == 1 => _sv_cmp_numeric(id1, id2)
-        is_num1 == 1                  => -1
-        is_num2 == 1                  => 1
+        is_num1 == true and is_num2 == true => _sv_cmp_numeric(id1, id2)
+        is_num1 == true                  => -1
+        is_num2 == true                  => 1
         id1 < id2                     => -1
         id1 > id2                     => 1
         else                          => 0

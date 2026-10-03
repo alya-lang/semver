@@ -81,7 +81,7 @@ pub function bump_prerelease(v: Version, tag: string = "alpha") -> Version
         let plen = arr_len(parts)
         if plen >= 2
             let last_part = parts[plen - 1]
-            if _sv_is_all_digits(last_part) == 1
+            if _sv_is_all_digits(last_part) == true
                 let next_num = to_int(last_part) + 1
                 let new_pre = parts[0]
                 let pi = 1

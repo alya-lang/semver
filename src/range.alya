@@ -30,7 +30,7 @@ pub function _sv_check_simple_constraint(v, op: string, target_str: string) -> i
         is ">=" then return cmp >= 0
         is "<" then return cmp < 0
         is "<=" then return cmp <= 0
-        else return 0
+        else return false
     end
 end
 
@@ -45,7 +45,7 @@ end
 pub function _sv_satisfies_comparator(v, comp: string) -> int
     let c = _sv_trim(comp)
     if len(c) == 0 or c == "*" or c == "x" or c == "X"
-        return 1
+        return true
     end
 
     # Caret Range (^1.2.3)
@@ -53,7 +53,7 @@ pub function _sv_satisfies_comparator(v, comp: string) -> int
         let base_str = _sv_trim(substring(c, 1, len(c) - 1))
         let base = parse(base_str)
         if compare(v, base) < 0
-            return 0
+            return false
         end
         if base.major > 0
             let upper = Version { major: base.major + 1, minor: 0, patch: 0, prerelease: "0", build: "", raw: "" }
@@ -72,7 +72,7 @@ pub function _sv_satisfies_comparator(v, comp: string) -> int
         let base_str = _sv_trim(substring(c, 1, len(c) - 1))
         let base = parse(base_str)
         if compare(v, base) < 0
-            return 0
+            return false
         end
         let upper = Version { major: base.major, minor: base.minor + 1, patch: 0, prerelease: "0", build: "", raw: "" }
         return compare(v, upper) < 0
@@ -136,13 +136,13 @@ pub function _sv_satisfies_conjunction(v, conj_str: string) -> int
     while i < arr_len(parts)
         let item = _sv_trim(parts[i])
         if len(item) > 0
-            if _sv_satisfies_comparator(v, item) == 0
-                return 0
+            if _sv_satisfies_comparator(v, item) == false
+                return false
             end
         end
         i += 1
     end
-    return 1
+    return true
 end
 
 ## Tests whether a version satisfies a full range expression with `||` branches.
@@ -162,7 +162,7 @@ pub function satisfies(v_in, range_str: string) -> int
     let v = v_in
     let r = _sv_trim(range_str)
     if len(r) == 0 or r == "*"
-        return 1
+        return true
     end
 
     # Check for OR pipes: "||"
@@ -186,14 +186,14 @@ pub function satisfies(v_in, range_str: string) -> int
     while bi < arr_len(or_branches)
         let b = or_branches[bi]
         if len(b) > 0
-            if _sv_satisfies_conjunction(v, b) == 1
-                return 1
+            if _sv_satisfies_conjunction(v, b) == true
+                return true
             end
         end
         bi += 1
     end
 
-    return 0
+    return false
 end
 
 ## Tests whether a version string satisfies a range expression.
