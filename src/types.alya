@@ -85,7 +85,7 @@ end
 ##
 ## ### Returns
 ## `1` for digits, `0` otherwise.
-pub function _sv_is_digit(ch: string) -> int
+pub function _sv_is_digit(ch: string) -> bool
     if len(ch) != 1
         return false
     end
@@ -100,7 +100,7 @@ end
 ##
 ## ### Returns
 ## `1` for all-digit strings, `0` otherwise.
-pub function _sv_is_all_digits(s: string) -> int
+pub function _sv_is_all_digits(s: string) -> bool
     let slen = len(s)
     if slen == 0
         return false
@@ -177,7 +177,7 @@ end
 ##
 ## ### Returns
 ## `1` on prefix match, `0` otherwise.
-pub function _sv_starts_with(s: string, prefix: string) -> int
+pub function _sv_starts_with(s: string, prefix: string) -> bool
     let plen = len(prefix)
     let slen = len(s)
     if plen > slen

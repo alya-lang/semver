@@ -174,7 +174,7 @@ end
 ## say is_valid("1.0.0-rc.1") # 1
 ## say is_valid("a.b.c") # 0
 ## ```
-pub function is_valid(v_str: string) -> int
+pub function is_valid(v_str: string) -> bool
     let s = clean(v_str)
     if len(s) == 0
         return false

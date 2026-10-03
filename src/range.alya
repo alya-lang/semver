@@ -130,7 +130,7 @@ end
 ##
 ## ### Returns
 ## `1` when every comparator is satisfied, `0` otherwise.
-pub function _sv_satisfies_conjunction(v, conj_str: string) -> int
+pub function _sv_satisfies_conjunction(v, conj_str: string) -> bool
     let parts = _sv_split_char(conj_str, " ")
     let i = 0
     while i < arr_len(parts)
@@ -158,7 +158,7 @@ end
 ## ```alya
 ## say satisfies(parse("1.5.0"), "^1.0.0 || ^2.0.0") # 1
 ## ```
-pub function satisfies(v_in, range_str: string) -> int
+pub function satisfies(v_in, range_str: string) -> bool
     let v = v_in
     let r = _sv_trim(range_str)
     if len(r) == 0 or r == "*"
